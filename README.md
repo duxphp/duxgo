@@ -25,7 +25,7 @@ server := duxgo.New()
 
 将含有 toml 配置文件的目录添加到配置目录中
 ```go
-server.SetConfigDir("./config")
+server.SetConfigDir("./config/")
 ```
 
 ## 3. 注册应用
