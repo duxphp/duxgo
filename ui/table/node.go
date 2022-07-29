@@ -1,8 +1,8 @@
 package table
 
 import (
-	"github.com/duxphp/duxgo/core/ui/node"
-	"github.com/duxphp/duxgo/core/util/function"
+	"github.com/duxphp/duxgo/ui/node"
+	"github.com/duxphp/duxgo/util/function"
 )
 
 type Side struct {

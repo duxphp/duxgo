@@ -1,11 +1,11 @@
 package table
 
 import (
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/core/ui/node"
-	"github.com/duxphp/duxgo/core/util/function"
 	"encoding/json"
 	"fmt"
+	"github.com/duxphp/duxgo/global"
+	"github.com/duxphp/duxgo/ui/node"
+	function2 "github.com/duxphp/duxgo/util/function"
 	"github.com/gookit/goutil/maputil"
 	"github.com/jianfengye/collection"
 	"github.com/labstack/echo/v4"
@@ -84,7 +84,7 @@ func (t *Table) DataOrder(key string, desc ...bool) *Table {
 // SetModel 设置模型模式
 func (t *Table) SetModel(mode any, primary string) *Table {
 	t.model = mode
-	t.modelDB = core.Db.Model(mode)
+	t.modelDB = global.Db.Model(mode)
 	t.primary = primary
 	return t
 }
@@ -361,7 +361,7 @@ func (t *Table) Data(ctx echo.Context) map[string]any {
 		Limit: t.limit,
 	}
 	_ = ctx.Bind(&pageQuery)
-	offset, totalPage := function.PageLimit(pageQuery.Page, cast.ToInt(total), pageQuery.Limit)
+	offset, totalPage := function2.PageLimit(pageQuery.Page, cast.ToInt(total), pageQuery.Limit)
 
 	// 数据查询
 	var data []map[string]any
@@ -382,7 +382,7 @@ func (t *Table) Data(ctx echo.Context) map[string]any {
 		}
 
 		if t.tree && len(data) > 0 {
-			data = function.SliceToTree(data, t.primary, "parent_id", "children")
+			data = function2.SliceToTree(data, t.primary, "parent_id", "children")
 		}
 		data = t.filterData(data, fields, formats)
 
@@ -400,7 +400,7 @@ func (t *Table) Data(ctx echo.Context) map[string]any {
 		ret, _ := collect.Slice(offset, pageQuery.Limit).ToJson()
 		json.Unmarshal(ret, &data)
 		if t.tree && len(data) > 0 {
-			data = function.SliceToTree(data, t.primary, "parent_id", "children")
+			data = function2.SliceToTree(data, t.primary, "parent_id", "children")
 		}
 		data = t.filterData(data, fields, formats)
 	}

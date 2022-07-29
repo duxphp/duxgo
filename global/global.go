@@ -1,4 +1,4 @@
-package duxgo
+package global
 
 import (
 	"context"
@@ -34,7 +34,7 @@ var (
 	ViewsFs  embed.FS
 	// Config 通用配置
 	Config    = map[string]*viper.Viper{}
-	ConfigDir = "./config"
+	ConfigDir = "./config/"
 	// ConfigManifest map[string]any
 
 	// Logger 日志服务

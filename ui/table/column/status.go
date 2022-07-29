@@ -1,9 +1,9 @@
 package column
 
 import (
-	"github.com/duxphp/duxgo/core/ui/node"
-	"github.com/duxphp/duxgo/core/ui/table"
 	"fmt"
+	"github.com/duxphp/duxgo/ui/node"
+	"github.com/duxphp/duxgo/ui/table"
 )
 
 // Status 状态展示

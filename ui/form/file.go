@@ -1,7 +1,7 @@
 package form
 
 import (
-	"github.com/duxphp/duxgo/core/ui/node"
+	"github.com/duxphp/duxgo/ui/node"
 )
 
 type FileType string

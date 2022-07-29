@@ -1,12 +1,12 @@
 package formLayout
 
 import (
-	"github.com/duxphp/duxgo/core/ui/form"
-	"github.com/duxphp/duxgo/core/ui/node"
+	form2 "github.com/duxphp/duxgo/ui/form"
+	"github.com/duxphp/duxgo/ui/node"
 )
 
 type Block struct {
-	form   *form.Form
+	form   *form2.Form
 	data   map[string]any
 	dialog bool
 	title  string
@@ -30,8 +30,8 @@ func (a *Block) SetDialog(dialog bool) {
 }
 
 // Column 列元素
-func (a *Block) Column(callback func(form *form.Form), opt ...any) {
-	formUI := form.NewForm()
+func (a *Block) Column(callback func(form *form2.Form), opt ...any) {
+	formUI := form2.NewForm()
 	formUI.SetData(a.data)
 	formUI.SetDialog(a.dialog)
 	a.form = formUI
@@ -39,12 +39,12 @@ func (a *Block) Column(callback func(form *form.Form), opt ...any) {
 }
 
 // Form 获取表单
-func (a *Block) Form(index ...int) *form.Form {
+func (a *Block) Form(index ...int) *form2.Form {
 	return a.form
 }
 
 // Expand 展开元素
-func (a *Block) Expand() []*form.Element {
+func (a *Block) Expand() []*form2.Element {
 	return a.form.ExpandElement()
 }
 

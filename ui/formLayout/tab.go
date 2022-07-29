@@ -1,8 +1,8 @@
 package formLayout
 
 import (
-	"github.com/duxphp/duxgo/core/ui/form"
-	"github.com/duxphp/duxgo/core/ui/node"
+	form2 "github.com/duxphp/duxgo/ui/form"
+	"github.com/duxphp/duxgo/ui/node"
 )
 
 type TabArgs struct {
@@ -13,7 +13,7 @@ type TabArgs struct {
 }
 
 type TabColumn struct {
-	form   *form.Form
+	form   *form2.Form
 	params TabArgs
 }
 
@@ -25,7 +25,7 @@ type Tab struct {
 
 // NewTab 切换布局
 func NewTab() *Tab {
-	form.NewForm()
+	form2.NewForm()
 	return &Tab{}
 }
 
@@ -40,8 +40,8 @@ func (a *Tab) SetDialog(dialog bool) {
 }
 
 // Column 列元素
-func (a *Tab) Column(callback func(form *form.Form), opt ...any) {
-	formUI := form.NewForm()
+func (a *Tab) Column(callback func(form *form2.Form), opt ...any) {
+	formUI := form2.NewForm()
 	formUI.SetData(a.data)
 	formUI.SetDialog(a.dialog)
 	params := TabArgs{}
@@ -56,7 +56,7 @@ func (a *Tab) Column(callback func(form *form.Form), opt ...any) {
 }
 
 // Form 获取表单
-func (a *Tab) Form(index ...int) *form.Form {
+func (a *Tab) Form(index ...int) *form2.Form {
 	i := 0
 	if len(index) > 0 {
 		i = index[0]
@@ -65,8 +65,8 @@ func (a *Tab) Form(index ...int) *form.Form {
 }
 
 // Expand 展开元素
-func (a *Tab) Expand() []*form.Element {
-	var element []*form.Element
+func (a *Tab) Expand() []*form2.Element {
+	var element []*form2.Element
 	for _, column := range a.columns {
 		element = append(element, column.form.ExpandElement()...)
 	}

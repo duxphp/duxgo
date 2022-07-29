@@ -3,9 +3,9 @@ package function
 import (
 	"bytes"
 	"crypto/md5"
-	"github.com/duxphp/duxgo/core"
 	"encoding/hex"
 	"fmt"
+	"github.com/duxphp/duxgo/global"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -102,7 +102,7 @@ func Url(urlString string, params map[string]any, absolutes ...bool) string {
 		absolute = absolutes[0]
 	}
 	if absolute {
-		urlBuild = core.Config["app"].GetString("app.baseUrl") + urlBuild
+		urlBuild = global.Config["app"].GetString("app.baseUrl") + urlBuild
 	}
 	return urlBuild
 }
@@ -148,7 +148,7 @@ func BuildUrl(urlString string, params map[string]any, absolute bool, expand ...
 	}
 	urlBuild := urlString + "?" + q.Encode()
 	if absolute {
-		urlBuild = core.Config["app"].GetString("app.baseUrl") + urlBuild
+		urlBuild = global.Config["app"].GetString("app.baseUrl") + urlBuild
 	}
 	for k, v := range paramsFix {
 		urlBuild = strings.Replace(urlBuild, "xx"+k+"xx", "${ "+v+" || ''}", -1)
@@ -212,7 +212,7 @@ func IsExist(f string) bool {
 func CreateDir(dirName string) bool {
 	err := os.MkdirAll(dirName, 0777)
 	if err != nil {
-		core.Logger.Error().Err(err).Msg(dirName)
+		global.Logger.Error().Err(err).Msg(dirName)
 		return false
 	}
 	return true

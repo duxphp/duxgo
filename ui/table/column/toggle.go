@@ -1,9 +1,9 @@
 package column
 
 import (
-	"github.com/duxphp/duxgo/core/ui/node"
-	"github.com/duxphp/duxgo/core/ui/table"
-	"github.com/duxphp/duxgo/core/util/function"
+	"github.com/duxphp/duxgo/ui/node"
+	"github.com/duxphp/duxgo/ui/table"
+	"github.com/duxphp/duxgo/util/function"
 )
 
 // Toggle 快速切换

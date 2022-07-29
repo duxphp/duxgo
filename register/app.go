@@ -1,7 +1,7 @@
 package register
 
 import (
-	"github.com/duxphp/duxgo/core/util"
+	util2 "github.com/duxphp/duxgo/util"
 	"github.com/hibiken/asynq"
 	"github.com/labstack/echo/v4"
 )
@@ -13,8 +13,8 @@ var (
 	AppMenu   = make(Menu)
 )
 
-type Router map[string]*util.RouterData
-type Menu map[string]*util.MenuData
+type Router map[string]*util2.RouterData
+type Menu map[string]*util2.MenuData
 
 // AppConfig 注册规则
 type AppConfig struct {

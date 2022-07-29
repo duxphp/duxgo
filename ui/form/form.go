@@ -1,12 +1,12 @@
 package form
 
 import (
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/core/exception"
-	"github.com/duxphp/duxgo/core/ui/node"
-	"github.com/duxphp/duxgo/core/util/function"
 	"encoding/json"
 	"fmt"
+	exception2 "github.com/duxphp/duxgo/exception"
+	"github.com/duxphp/duxgo/global"
+	"github.com/duxphp/duxgo/ui/node"
+	"github.com/duxphp/duxgo/util/function"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/mitchellh/mapstructure"
@@ -44,14 +44,14 @@ func NewForm() *Form {
 		title:    "信息详情",
 		back:     true,
 		dialog:   true,
-		validate: core.Validator,
+		validate: global.Validator,
 	}
 }
 
 // SetModel 设置模型
 func (t *Form) SetModel(mode any, primary string, id ...uint) *Form {
 	t.model = mode
-	t.modelDB = core.Db.Model(t.model)
+	t.modelDB = global.Db.Model(t.model)
 	t.primary = primary
 	if len(id) > 0 {
 		t.key = id[0]
@@ -267,7 +267,7 @@ func (t *Form) Save(ctx echo.Context) error {
 				err := t.validate.Var(postData[item.Field], val["role"])
 				if err != nil {
 					if val["message"] != "" {
-						return exception.ParameterError(val["message"])
+						return exception2.ParameterError(val["message"])
 					}
 					return err
 				}
@@ -300,7 +300,7 @@ func (t *Form) Save(ctx echo.Context) error {
 
 	// 过滤字段
 	fields := []string{}
-	result, _ := core.Db.Migrator().ColumnTypes(t.model)
+	result, _ := global.Db.Migrator().ColumnTypes(t.model)
 	for _, col := range result {
 		fields = append(fields, col.Name())
 	}
@@ -317,7 +317,7 @@ func (t *Form) Save(ctx echo.Context) error {
 	updateStatus := lo.Ternary[bool](t.key > 0, true, false)
 
 	// 事务开启
-	transaction := core.Db.Begin()
+	transaction := global.Db.Begin()
 
 	// 保存前数据
 	if t.saveBefore != nil {
@@ -339,7 +339,7 @@ func (t *Form) Save(ctx echo.Context) error {
 			var pNum int64
 			transaction.Model(t.model).Where(t.primary+" = ?", tmpId).Count(&pNum)
 			if pNum == 0 {
-				return exception.BusinessError("parent data does not exist")
+				return exception2.BusinessError("parent data does not exist")
 			}
 		}
 
@@ -353,13 +353,13 @@ func (t *Form) Save(ctx echo.Context) error {
 		err = mode.Create(data).Error
 	}
 	if err != nil {
-		return exception.Error(err)
+		return exception2.Error(err)
 	}
 	if t.key == 0 {
 		lastData := map[string]any{}
 		err = transaction.Model(t.model).Select(t.primary).Last(&lastData).Error
 		if err != nil {
-			return exception.Error(err)
+			return exception2.Error(err)
 		}
 		t.key = cast.ToUint(lastData[t.primary])
 	}
@@ -367,7 +367,7 @@ func (t *Form) Save(ctx echo.Context) error {
 	// 查询数据
 	err = transaction.Model(t.model).Find(t.model, t.key).Error
 	if err != nil {
-		return exception.Error(err)
+		return exception2.Error(err)
 	}
 	marshal, _ := json.Marshal(t.model)
 	json.Unmarshal(marshal, &t.info)

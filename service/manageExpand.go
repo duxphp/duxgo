@@ -1,12 +1,12 @@
 package service
 
 import (
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/core/exception"
-	"github.com/duxphp/duxgo/core/response"
-	"github.com/duxphp/duxgo/core/ui/form"
-	"github.com/duxphp/duxgo/core/ui/table"
-	"github.com/duxphp/duxgo/core/util/function"
+	"github.com/duxphp/duxgo/exception"
+	"github.com/duxphp/duxgo/global"
+	"github.com/duxphp/duxgo/response"
+	"github.com/duxphp/duxgo/ui/form"
+	"github.com/duxphp/duxgo/ui/table"
+	function2 "github.com/duxphp/duxgo/util/function"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/cast"
 	"github.com/tidwall/gjson"
@@ -34,7 +34,7 @@ func NewManageExpand(event ...string) *ManageExpand {
 		eventName = event[0]
 	}
 	return &ManageExpand{
-		event: function.Md5(eventName),
+		event: function2.Md5(eventName),
 	}
 }
 
@@ -114,7 +114,7 @@ func (t *ManageExpand) FormSave(ctx echo.Context, eventPos ...string) error {
 		parentKey = cast.ToUint(info["parent_id"])
 	}
 	// 获取节点数据
-	tree := function.GetTreeNode(data["data"], formUI.GetKey(), "id", "children")
+	tree := function2.GetTreeNode(data["data"], formUI.GetKey(), "id", "children")
 	data["data"] = []map[string]any{tree}
 
 	eventData := []map[string]any{}
@@ -142,12 +142,12 @@ func (t *ManageExpand) Status(ctx echo.Context, model any) error {
 	if id == "" {
 		return exception.BusinessError("参数传递错误")
 	}
-	body := function.CtxBody(ctx)
+	body := function2.CtxBody(ctx)
 	field := gjson.GetBytes(body, "field").String()
 	value := gjson.GetBytes(body, "status").Bool()
 
-	core.Db.First(model, id)
-	core.Db.Model(model).Update(field, value)
+	global.Db.First(model, id)
+	global.Db.Model(model).Update(field, value)
 	return response.New(ctx).Send("更改状态成功")
 }
 
@@ -169,7 +169,7 @@ func (t *ManageExpand) Del(ctx echo.Context, model any) error {
 			},
 		},
 	}
-	tx := core.Db.Begin()
+	tx := global.Db.Begin()
 	if t.delCall != nil {
 		err := t.delCall(id, tx)
 		if err != nil {
@@ -211,10 +211,10 @@ func (t *ManageExpand) Search(ctx echo.Context) error {
 		return err
 	}
 
-	model := core.Db.Model(t.model).Debug()
+	model := global.Db.Model(t.model).Debug()
 
 	if params.Query != "" && len(t.searchField) > 0 {
-		where := core.Db
+		where := global.Db
 		for _, field := range t.searchField {
 			where = where.Or(field+` like ?`, "%"+params.Query+"%")
 		}
@@ -247,7 +247,7 @@ func (t *ManageExpand) Search(ctx echo.Context) error {
 		Limit: 50,
 	}
 	_ = ctx.Bind(&pageQuery)
-	offset, totalPage := function.PageLimit(pageQuery.Page, cast.ToInt(count), pageQuery.Limit)
+	offset, totalPage := function2.PageLimit(pageQuery.Page, cast.ToInt(count), pageQuery.Limit)
 
 	if err != nil {
 		return err

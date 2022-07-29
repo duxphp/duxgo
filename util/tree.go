@@ -1,9 +1,9 @@
 package util
 
 import (
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/core/response"
 	"fmt"
+	"github.com/duxphp/duxgo/global"
+	"github.com/duxphp/duxgo/response"
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
@@ -37,13 +37,13 @@ func TreeSort(model any, key string) func(ctx echo.Context) error {
 
 		// 查询当前节点数据
 		info := map[string]any{}
-		core.Db.Model(model).Find(&info, params.ID)
+		global.Db.Model(model).Find(&info, params.ID)
 
 		// 获取新位置上级ID
 		var parentId int
 		node := map[string]any{}
 		if params.Before != 0 {
-			err = core.Db.Model(model).Find(&node, params.Before).Error
+			err = global.Db.Model(model).Find(&node, params.Before).Error
 			if err != nil {
 				return err
 			}
@@ -111,7 +111,7 @@ func (t *TreeSortT) UpdateNodeIds(ids []int, id int, parentId int) error {
 		if v == id {
 			data["parent_id"] = lo.Ternary[any](parentId == 0, nil, parentId)
 		}
-		err := core.Db.Model(t.model).Where(t.key+" = ?", v).Updates(data).Error
+		err := global.Db.Model(t.model).Where(t.key+" = ?", v).Updates(data).Error
 		if err != nil {
 			return err
 		}
@@ -122,7 +122,7 @@ func (t *TreeSortT) UpdateNodeIds(ids []int, id int, parentId int) error {
 // GetNodeIds 按ID获取数据
 func (t *TreeSortT) GetNodeIds(parentId int) ([]int, error) {
 	ids := []int{}
-	modelDB := core.Db.Model(t.model)
+	modelDB := global.Db.Model(t.model)
 	if parentId == 0 {
 		modelDB.Where("parent_id is NULL")
 	} else {

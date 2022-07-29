@@ -1,8 +1,8 @@
 package column
 
 import (
-	"github.com/duxphp/duxgo/core/ui/node"
-	"github.com/duxphp/duxgo/core/ui/table"
+	"github.com/duxphp/duxgo/ui/node"
+	"github.com/duxphp/duxgo/ui/table"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
 )

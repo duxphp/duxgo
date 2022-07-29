@@ -1,9 +1,9 @@
 package column
 
 import (
-	"github.com/duxphp/duxgo/core/ui/node"
-	"github.com/duxphp/duxgo/core/ui/table"
-	"github.com/duxphp/duxgo/core/ui/widget"
+	"github.com/duxphp/duxgo/ui/node"
+	"github.com/duxphp/duxgo/ui/table"
+	"github.com/duxphp/duxgo/ui/widget"
 )
 
 // Link 链接

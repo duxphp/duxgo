@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/global"
 	"github.com/spf13/viper"
 	"os"
 	"path"
@@ -13,7 +13,7 @@ func Init() {
 
 	// 解析配置文件
 	pwd, _ := os.Getwd()
-	configFiles, err := filepath.Glob(filepath.Join(pwd, "./config/*.toml"))
+	configFiles, err := filepath.Glob(filepath.Join(pwd, global.ConfigDir+"*.toml"))
 	if err != nil {
 		panic("configuration loading failure")
 	}
@@ -21,26 +21,26 @@ func Init() {
 		filename := path.Base(file)
 		suffix := path.Ext(file)
 		name := filename[0 : len(filename)-len(suffix)]
-		core.Config[name] = LoadConfig(name)
+		global.Config[name] = LoadConfig(name)
 	}
 
 	// 解析媒体文件
-	jsonPath, err := core.StaticFs.Open("public/manifest.json")
-	if err != nil {
-		panic(err.Error())
-	}
-	config := viper.New()
-	config.SetConfigType("json")
-	err = config.ReadConfig(jsonPath)
-	if err != nil {
-		panic(err.Error())
-	}
-	jsonPath.Close()
-	core.ConfigManifest = config.GetStringMap("src/main.js")
+	//jsonPath, err := duxgo.StaticFs.Open("public/manifest.json")
+	//if err != nil {
+	//	panic(err.Error())
+	//}
+	//config := viper.New()
+	//config.SetConfigType("json")
+	//err = config.ReadConfig(jsonPath)
+	//if err != nil {
+	//	panic(err.Error())
+	//}
+	//jsonPath.Close()
+	//duxgo.ConfigManifest = config.GetStringMap("src/main.js")
 
 	// 调试配置
-	core.Debug = core.Config["app"].GetBool("server.debug")
-	core.DebugMsg = core.Config["app"].GetString("server.debugMsg")
+	global.Debug = global.Config["app"].GetBool("server.debug")
+	global.DebugMsg = global.Config["app"].GetString("server.debugMsg")
 
 }
 
@@ -48,7 +48,7 @@ func LoadConfig(name string) *viper.Viper {
 	config := viper.New()
 	config.SetConfigName(name)
 	config.SetConfigType("toml")
-	config.AddConfigPath("./config/")
+	config.AddConfigPath(global.ConfigDir)
 	if err := config.ReadInConfig(); err != nil {
 		fmt.Println("config", name)
 		panic(err)

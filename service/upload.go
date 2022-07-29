@@ -2,9 +2,8 @@ package service
 
 import (
 	"encoding/json"
-	"github.com/duxphp/duxgo/core/exception"
-	"github.com/duxphp/duxgo/core/response"
-	"duxgopkg"
+	"github.com/duxphp/duxgo/exception"
+	"github.com/duxphp/duxgo/response"
 	"io/ioutil"
 )
 

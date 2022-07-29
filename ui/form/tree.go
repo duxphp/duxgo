@@ -1,8 +1,8 @@
 package form
 
 import (
-	"github.com/duxphp/duxgo/core/ui/node"
 	"encoding/json"
+	"github.com/duxphp/duxgo/ui/node"
 )
 
 // Tree 树形选择框

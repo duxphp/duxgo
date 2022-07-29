@@ -4,18 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/core/alarm"
-	"github.com/duxphp/duxgo/core/cache"
-	"github.com/duxphp/duxgo/core/config"
-	"github.com/duxphp/duxgo/core/database"
-	"github.com/duxphp/duxgo/core/exception"
-	"github.com/duxphp/duxgo/core/logger"
-	"github.com/duxphp/duxgo/core/register"
-	"github.com/duxphp/duxgo/core/task"
-	"github.com/duxphp/duxgo/core/util/function"
-	"github.com/duxphp/duxgo/core/validator"
-	"github.com/duxphp/duxgo/core/websocket"
+	"github.com/duxphp/duxgo/alarm"
+	"github.com/duxphp/duxgo/cache"
+	"github.com/duxphp/duxgo/config"
+	database2 "github.com/duxphp/duxgo/database"
+	"github.com/duxphp/duxgo/exception"
+	"github.com/duxphp/duxgo/global"
+	"github.com/duxphp/duxgo/logger"
+	"github.com/duxphp/duxgo/register"
+	"github.com/duxphp/duxgo/task"
+	"github.com/duxphp/duxgo/util/function"
+	"github.com/duxphp/duxgo/validator"
+	"github.com/duxphp/duxgo/websocket"
 	"github.com/gookit/event"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -56,9 +56,9 @@ func New() *bootstrap {
 // RegisterCore 注册服务
 func (t *bootstrap) RegisterCore() *bootstrap {
 	// 设置时区
-	core.TimeLocation = time.FixedZone("CST", 8*3600)
-	core.Version = Version
-	time.Local = core.TimeLocation
+	global.TimeLocation = time.FixedZone("CST", 8*3600)
+	global.Version = Version
+	time.Local = global.TimeLocation
 
 	// 配置服务
 	config.Init()
@@ -76,13 +76,13 @@ func (t *bootstrap) RegisterCore() *bootstrap {
 	validator.Init()
 
 	// 注册数据库
-	database.GormInit()
+	database2.GormInit()
 
 	// 注册MangoDB
-	database.QmgoInit()
+	database2.QmgoInit()
 
 	// 注册Redis
-	database.RedisInit()
+	database2.RedisInit()
 
 	// 注册队列服务
 	task.Init()
@@ -107,7 +107,7 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 func (t *bootstrap) RegisterHttp() *bootstrap {
 	// web服务
 	t.app = echo.New()
-	core.App = t.app
+	global.App = t.app
 
 	// 注册模板引擎
 	funcMap := template.FuncMap{
@@ -120,7 +120,7 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 		},
 	}
 	render := &Template{
-		templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.ViewsFs, "views/*", "app/*/views/*")),
+		templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(global.ViewsFs, "views/*", "app/*/views/*")),
 	}
 
 	t.app.Renderer = render
@@ -137,14 +137,14 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 		} else {
 			msg = err.Error()
 			body := function.CtxBody(c)
-			core.Logger.Error().Bytes("body", body).Err(err).Msg("error")
+			global.Logger.Error().Bytes("body", body).Err(err).Msg("error")
 		}
 		err = c.JSON(code, map[string]any{
 			"code":    code,
 			"message": msg,
 		})
 		if err != nil {
-			core.Logger.Error().Err(err).Send()
+			global.Logger.Error().Err(err).Send()
 		}
 	}
 
@@ -153,7 +153,7 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 		StackSize: 4 << 10, // 1 KB
 		LogLevel:  log.ERROR,
 		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
-			core.Logger.Error().Err(err).Msg("PANIC RECOVER")
+			global.Logger.Error().Err(err).Msg("PANIC RECOVER")
 			return exception.Internal(err)
 		},
 	}))
@@ -175,7 +175,7 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 	}
 
 	// 链接超时
-	timeout := core.Config["app"].GetInt("server.timeout")
+	timeout := global.Config["app"].GetInt("server.timeout")
 	t.app.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Skipper: func(c echo.Context) bool {
 			if c.IsWebSocket() {
@@ -189,7 +189,7 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 
 	// 注册静态路由
 	t.app.Static("/uploads", "./uploads")
-	t.app.StaticFS("/", echo.MustSubFS(core.StaticFs, "public"))
+	t.app.StaticFS("/", echo.MustSubFS(global.StaticFs, "public"))
 
 	// 前端中间件
 	t.app.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -204,14 +204,14 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 	t.app.Use(middleware.RequestID())
 
 	// 访问日志
-	if core.Config["app"].GetBool("logger.request.status") {
+	if global.Config["app"].GetBool("logger.request.status") {
 		vLog := logger.New(
-			core.Config["app"].GetString("logger.request.level"),
-			core.Config["app"].GetString("logger.request.path"),
-			core.Config["app"].GetInt("logger.request.maxSize"),
-			core.Config["app"].GetInt("logger.request.maxBackups"),
-			core.Config["app"].GetInt("logger.request.maxAge"),
-			core.Config["app"].GetBool("logger.request.compress"),
+			global.Config["app"].GetString("logger.request.level"),
+			global.Config["app"].GetString("logger.request.path"),
+			global.Config["app"].GetInt("logger.request.maxSize"),
+			global.Config["app"].GetInt("logger.request.maxBackups"),
+			global.Config["app"].GetInt("logger.request.maxAge"),
+			global.Config["app"].GetBool("logger.request.compress"),
 		).With().Timestamp().Logger()
 		t.app.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 			LogURI:       true,
@@ -342,7 +342,7 @@ func (t *bootstrap) StartTask() *bootstrap {
 	for _, name := range register.AppIndex {
 		appConfig := register.AppList[name]
 		if appConfig.Queue != nil {
-			appConfig.Queue(core.QueueMux)
+			appConfig.Queue(global.QueueMux)
 		}
 	}
 
@@ -350,33 +350,33 @@ func (t *bootstrap) StartTask() *bootstrap {
 	for _, name := range register.AppIndex {
 		appConfig := register.AppList[name]
 		if appConfig.Scheduler != nil {
-			appConfig.Scheduler(core.Scheduler)
+			appConfig.Scheduler(global.Scheduler)
 		}
 	}
 	//启动队列与调度服务
 	go func() {
-		core.Logger.Info().Msg("start scheduler service")
+		global.Logger.Info().Msg("start scheduler service")
 		task.StartScheduler()
 
 	}()
-	core.Logger.Info().Msg("start queue service")
+	global.Logger.Info().Msg("start queue service")
 	task.StartQueue()
 	return t
 }
 
 func (t *bootstrap) StopTask() {
-	core.Logger.Info().Msg("stop queue service")
-	core.Queue.Shutdown()
-	core.Logger.Info().Msg("stop scheduler service")
-	core.Scheduler.Shutdown()
+	global.Logger.Info().Msg("stop queue service")
+	global.Queue.Shutdown()
+	global.Logger.Info().Msg("stop scheduler service")
+	global.Scheduler.Shutdown()
 }
 
 func (t *bootstrap) StartHttp() {
 	// ping 队列服务
 	task.Add("ping", &map[string]any{})
 
-	prot := core.Config["app"].GetString("server.port")
-	debug := core.Config["app"].GetBool("server.debug")
+	prot := global.Config["app"].GetString("server.port")
+	debug := global.Config["app"].GetBool("server.debug")
 
 	data, _ := json.MarshalIndent(t.app.Routes(), "", "  ")
 	ioutil.WriteFile("./routes.json", data, 0644)
@@ -432,35 +432,35 @@ func (t *bootstrap) StartHttp() {
 	fmt.Print(logo)
 
 	// 记录启动时间
-	core.BootTime = time.Now()
+	global.BootTime = time.Now()
 
 	// 启动http服务
 	go func() {
 		serverAddr := ":" + prot
 		err := t.app.Start(serverAddr)
 		if err != nil {
-			core.Logger.Error().Err(err).Msg("http stop")
+			global.Logger.Error().Err(err).Msg("http stop")
 		}
 	}()
 }
 
 func (t *bootstrap) StopHttp() {
-	core.Logger.Info().Msg("trigger a shutdown event")
+	global.Logger.Info().Msg("trigger a shutdown event")
 	err, _ := event.Fire("app.close", event.M{})
 	if err != nil {
-		core.Logger.Error().Err(err).Msg("event stop")
+		global.Logger.Error().Err(err).Msg("event stop")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	core.Logger.Info().Msg("stop the web service")
+	global.Logger.Info().Msg("stop the web service")
 
 	if err := t.app.Shutdown(ctx); err != nil {
-		core.Logger.Error().Err(err).Msg("http stop")
+		global.Logger.Error().Err(err).Msg("http stop")
 	}
 }
 
 func (t *bootstrap) Release() {
-	core.Logger.Info().Msg("stop ants service")
+	global.Logger.Info().Msg("stop ants service")
 	websocket.ReleaseSocket()
 	ants.Release()
 	os.Exit(0)
