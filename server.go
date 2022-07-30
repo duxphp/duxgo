@@ -39,13 +39,13 @@ func New() *Server {
 }
 
 // RegisterApp 注册应用
-func (s *Server) RegisterApp(call func(*bootstrap.Bootstrap)) {
-	s.registerApp = append(s.registerApp, call)
+func (s *Server) RegisterApp(calls ...func(*bootstrap.Bootstrap)) {
+	s.registerApp = append(s.registerApp, calls...)
 }
 
 // RegisterService 注册服务
-func (s *Server) RegisterService(call func(*bootstrap.Bootstrap)) {
-	s.registerService = append(s.registerService, call)
+func (s *Server) RegisterService(calls ...func(*bootstrap.Bootstrap)) {
+	s.registerService = append(s.registerService, calls...)
 }
 
 // SetConfigDir 设置配置目录
