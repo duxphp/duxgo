@@ -29,9 +29,9 @@ var (
 	// TimeLocation 时区
 	TimeLocation *time.Location
 	// Ctx Context
-	Ctx      = context.Background()
-	StaticFs embed.FS
-	ViewsFs  embed.FS
+	Ctx = context.Background()
+	//StaticFs *embed.FS
+	ViewsFs *embed.FS
 	// Config 通用配置
 	Config    = map[string]*viper.Viper{}
 	ConfigDir = "./config/"

@@ -121,11 +121,13 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 			return template.JS(a)
 		},
 	}
-	render := &Template{
-		templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.ViewsFs, "views/*", "App/*/views/*")),
-	}
 
-	t.App.Renderer = render
+	if core.ViewsFs != nil {
+		render := &Template{
+			templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.ViewsFs, "views/*", "App/*/views/*")),
+		}
+		t.App.Renderer = render
+	}
 
 	// 注册异常处理
 	t.App.HTTPErrorHandler = func(err error, c echo.Context) {
@@ -191,7 +193,7 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 
 	// 注册静态路由
 	t.App.Static("/uploads", "./uploads")
-	t.App.StaticFS("/", echo.MustSubFS(core.StaticFs, "public"))
+	//t.App.StaticFS("/", echo.MustSubFS(core.StaticFs, "public"))
 
 	// 前端中间件
 	t.App.Use(middleware.CORSWithConfig(middleware.CORSConfig{
