@@ -9,14 +9,12 @@ import (
 	"github.com/duxphp/duxgo/cache"
 	"github.com/duxphp/duxgo/config"
 	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/database"
 	"github.com/duxphp/duxgo/exception"
 	"github.com/duxphp/duxgo/logger"
 	"github.com/duxphp/duxgo/register"
 	"github.com/duxphp/duxgo/task"
 	"github.com/duxphp/duxgo/util/function"
 	"github.com/duxphp/duxgo/validator"
-	"github.com/duxphp/duxgo/websocket"
 	"github.com/gookit/color"
 	"github.com/gookit/event"
 	"github.com/labstack/echo/v4"
@@ -75,24 +73,6 @@ func (t *Bootstrap) RegisterCore() *Bootstrap {
 
 	// 注册验证器
 	validator.Init()
-
-	// 注册数据库
-	database.GormInit()
-
-	// 注册MangoDB
-	database.QmgoInit()
-
-	// 注册Redis
-	database.RedisInit()
-
-	// 注册队列服务
-	task.Init()
-
-	// 注册应用模块
-	//t.RegisterApp()
-
-	// 注册websocket服务
-	websocket.InitSocket()
 
 	return t
 }
@@ -457,7 +437,6 @@ func (t *Bootstrap) StopHttp() {
 
 // Release 释放服务
 func (t *Bootstrap) Release() {
-	websocket.ReleaseSocket()
 	ants.Release()
 	os.Exit(0)
 

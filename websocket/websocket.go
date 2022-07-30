@@ -25,8 +25,8 @@ var (
 	pingPeriod = 10 * time.Second
 )
 
-// InitSocket 默认初始化
-func InitSocket() {
+// Init 默认初始化
+func Init() {
 	//defer pool.Release()
 	Socket = New()
 	Socket.Start()
