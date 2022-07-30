@@ -25,6 +25,7 @@ func Init() {
 		name := filename[0 : len(filename)-len(suffix)]
 		core.Config[name] = LoadConfig(name)
 	}
+	fmt.Println("configConfig", core.Config)
 
 	// 解析媒体文件
 	//jsonPath, err := duxgo.StaticFs.Open("public/manifest.json")
