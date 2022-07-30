@@ -146,12 +146,15 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 		}
 		// WEB请求
 		if code == http.StatusNotFound {
-			_ = core.Tpl.ExecuteTemplate(c.Response(), "404.gohtml", nil)
+			err = core.Tpl.ExecuteTemplate(c.Response(), "404.gohtml", nil)
 		} else {
-			_ = core.Tpl.ExecuteTemplate(c.Response(), "500.gohtml", map[string]any{
+			err = core.Tpl.ExecuteTemplate(c.Response(), "500.gohtml", map[string]any{
 				"code":    code,
 				"message": msg,
 			})
+		}
+		if err != nil {
+			core.Logger.Error().Err(err).Send()
 		}
 
 	}
