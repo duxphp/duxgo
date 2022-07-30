@@ -146,9 +146,9 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 		}
 		// WEB请求
 		if code == http.StatusNotFound {
-			_ = core.Tpl.ExecuteTemplate(c.Response(), "404.html", nil)
+			_ = core.Tpl.ExecuteTemplate(c.Response(), "404.gohtml", nil)
 		} else {
-			_ = core.Tpl.ExecuteTemplate(c.Response(), "500.html", map[string]any{
+			_ = core.Tpl.ExecuteTemplate(c.Response(), "500.gohtml", map[string]any{
 				"code":    code,
 				"message": msg,
 			})
@@ -211,7 +211,7 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 
 	// 设置默认页面
 	t.App.GET("/", func(c echo.Context) error {
-		err := core.Tpl.ExecuteTemplate(c.Response(), "welcome.html", nil)
+		err := core.Tpl.ExecuteTemplate(c.Response(), "welcome.gohtml", nil)
 		if err != nil {
 			return err
 		}
