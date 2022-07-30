@@ -69,7 +69,7 @@ func Init() {
 	core.QueueInspector = inspector
 
 	core.QueueMux.HandleFunc("ping", func(ctx context.Context, t *asynq.Task) error {
-		color.Print("<green>queue ping status</>")
+		color.Print("⇨ queue ping status")
 		return nil
 	})
 
