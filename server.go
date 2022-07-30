@@ -11,7 +11,7 @@ import (
 
 // Server 服务管理
 type Server struct {
-	registerApp     []func(*bootstrap.Bootstrap) // 注册应用数据
+	registerApp     []func()                     // 注册应用数据
 	registerService []func(*bootstrap.Bootstrap) // 注册服务数据
 	ServerStatus    ServerStatus                 // 系统服务状态
 }
@@ -39,7 +39,7 @@ func New() *Server {
 }
 
 // RegisterApp 注册应用
-func (s *Server) RegisterApp(calls ...func(*bootstrap.Bootstrap)) {
+func (s *Server) RegisterApp(calls ...func()) {
 	s.registerApp = append(s.registerApp, calls...)
 }
 
@@ -115,7 +115,7 @@ func (s *Server) Start() {
 
 	// 注册应用
 	for _, call := range s.registerApp {
-		call(t)
+		call()
 	}
 
 	// 注册WEB服务
