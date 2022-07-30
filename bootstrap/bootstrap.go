@@ -103,6 +103,7 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 		},
 	}
 
+	// 注册模板引擎
 	if core.ViewsFs != nil {
 		render := &Template{
 			templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(*core.ViewsFs, "views/*", "App/*/views/*")),
@@ -110,6 +111,7 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 		t.App.Renderer = render
 	}
 
+	// 注册系统模板
 	tpl, err := template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.TplFs, "template/*")
 	if err != nil {
 		return nil
@@ -193,7 +195,7 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	t.App.Logger.SetLevel(log.OFF)
 
 	t.App.GET("/", func(c echo.Context) error {
-		err := core.Tpl.ExecuteTemplate(c.Response(), "template/welcome.tpl", nil)
+		err := core.Tpl.ExecuteTemplate(c.Response(), "welcome.gohtml", nil)
 		if err != nil {
 			return err
 		}
