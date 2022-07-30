@@ -133,6 +133,15 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 			core.Logger.Error().Bytes("body", body).Err(err).Msg("error")
 		}
 
+		err = c.JSON(code, map[string]any{
+			"code":    code,
+			"message": msg,
+		})
+		if err != nil {
+			core.Logger.Error().Err(err).Send()
+		}
+		return
+
 		// AJAX请求
 		if function.IsAjax(c) {
 			err = c.JSON(code, map[string]any{
