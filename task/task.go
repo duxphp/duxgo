@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/duxphp/duxgo/core"
+	"github.com/gookit/color"
 	"github.com/hibiken/asynq"
 	"github.com/spf13/cast"
 	"time"
@@ -68,7 +69,7 @@ func Init() {
 	core.QueueInspector = inspector
 
 	core.QueueMux.HandleFunc("ping", func(ctx context.Context, t *asynq.Task) error {
-		core.Logger.Debug().Msg("queue ping status")
+		color.Print("queue ping status", color.FgGreen)
 		return nil
 	})
 
