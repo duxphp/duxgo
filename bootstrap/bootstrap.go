@@ -434,7 +434,7 @@ func (t *Bootstrap) StartHttp() {
 		serverAddr := ":" + prot
 		err := t.App.Start(serverAddr)
 		if errors.Is(err, http.ErrServerClosed) {
-			color.Print("⇨ <red>Server closed</>\n")
+			color.Print("\n⇨ <red>Server closed</>\n")
 			return
 		}
 		if err != nil {
