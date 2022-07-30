@@ -106,7 +106,7 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	// 注册模板引擎
 	if core.ViewsFs != nil {
 		render := &Template{
-			templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(*core.ViewsFs, "views/*", "App/*/views/*")),
+			templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(*core.ViewsFs, "views/*", "app/*/views/*")),
 		}
 		t.App.Renderer = render
 	}
