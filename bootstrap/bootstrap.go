@@ -433,7 +433,11 @@ func (t *Bootstrap) StartHttp() {
 	go func() {
 		serverAddr := ":" + prot
 		err := t.App.Start(serverAddr)
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if errors.Is(err, http.ErrServerClosed) {
+			color.Print("⇨ <red>Server closed</>\n")
+			return
+		}
+		if err != nil {
 			core.Logger.Error().Err(err).Msg("web")
 		}
 	}()
@@ -449,7 +453,7 @@ func (t *Bootstrap) StopHttp() {
 	defer cancel()
 
 	if err := t.App.Shutdown(ctx); err != nil {
-		core.Logger.Error().Err(err).Msg("http stop")
+		core.Logger.Error().Err(err).Msg("web")
 	}
 }
 
