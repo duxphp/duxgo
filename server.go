@@ -113,13 +113,13 @@ func (s *Server) Start() {
 		websocket.Init()
 	}
 
-	// 注册WEB服务
-	t.RegisterHttp()
-
 	// 注册应用
 	for _, call := range s.registerApp {
 		call(t)
 	}
+
+	// 注册WEB服务
+	t.RegisterHttp()
 
 	// 注册服务
 	for _, call := range s.registerService {
