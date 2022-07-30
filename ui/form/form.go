@@ -3,8 +3,8 @@ package form
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/duxphp/duxgo/core"
 	exception2 "github.com/duxphp/duxgo/exception"
-	"github.com/duxphp/duxgo/global"
 	"github.com/duxphp/duxgo/ui/node"
 	"github.com/duxphp/duxgo/util/function"
 	"github.com/go-playground/validator/v10"
@@ -44,14 +44,14 @@ func NewForm() *Form {
 		title:    "信息详情",
 		back:     true,
 		dialog:   true,
-		validate: global.Validator,
+		validate: core.Validator,
 	}
 }
 
 // SetModel 设置模型
 func (t *Form) SetModel(mode any, primary string, id ...uint) *Form {
 	t.model = mode
-	t.modelDB = global.Db.Model(t.model)
+	t.modelDB = core.Db.Model(t.model)
 	t.primary = primary
 	if len(id) > 0 {
 		t.key = id[0]
@@ -300,7 +300,7 @@ func (t *Form) Save(ctx echo.Context) error {
 
 	// 过滤字段
 	fields := []string{}
-	result, _ := global.Db.Migrator().ColumnTypes(t.model)
+	result, _ := core.Db.Migrator().ColumnTypes(t.model)
 	for _, col := range result {
 		fields = append(fields, col.Name())
 	}
@@ -317,7 +317,7 @@ func (t *Form) Save(ctx echo.Context) error {
 	updateStatus := lo.Ternary[bool](t.key > 0, true, false)
 
 	// 事务开启
-	transaction := global.Db.Begin()
+	transaction := core.Db.Begin()
 
 	// 保存前数据
 	if t.saveBefore != nil {

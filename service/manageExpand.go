@@ -1,8 +1,8 @@
 package service
 
 import (
+	"github.com/duxphp/duxgo/core"
 	"github.com/duxphp/duxgo/exception"
-	"github.com/duxphp/duxgo/global"
 	"github.com/duxphp/duxgo/response"
 	"github.com/duxphp/duxgo/ui/form"
 	"github.com/duxphp/duxgo/ui/table"
@@ -146,8 +146,8 @@ func (t *ManageExpand) Status(ctx echo.Context, model any) error {
 	field := gjson.GetBytes(body, "field").String()
 	value := gjson.GetBytes(body, "status").Bool()
 
-	global.Db.First(model, id)
-	global.Db.Model(model).Update(field, value)
+	core.Db.First(model, id)
+	core.Db.Model(model).Update(field, value)
 	return response.New(ctx).Send("更改状态成功")
 }
 
@@ -169,7 +169,7 @@ func (t *ManageExpand) Del(ctx echo.Context, model any) error {
 			},
 		},
 	}
-	tx := global.Db.Begin()
+	tx := core.Db.Begin()
 	if t.delCall != nil {
 		err := t.delCall(id, tx)
 		if err != nil {
@@ -211,10 +211,10 @@ func (t *ManageExpand) Search(ctx echo.Context) error {
 		return err
 	}
 
-	model := global.Db.Model(t.model).Debug()
+	model := core.Db.Model(t.model).Debug()
 
 	if params.Query != "" && len(t.searchField) > 0 {
-		where := global.Db
+		where := core.Db
 		for _, field := range t.searchField {
 			where = where.Or(field+` like ?`, "%"+params.Query+"%")
 		}

@@ -1,13 +1,13 @@
 package alarm
 
 import (
-	"github.com/duxphp/duxgo/global"
+	"github.com/duxphp/duxgo/core"
 	"github.com/go-resty/resty/v2"
 	"time"
 )
 
 func Init() {
-	global.Alarm = New(global.Config["app"].GetStringSlice("Alarm.urls"))
+	core.Alarm = New(core.Config["app"].GetStringSlice("Alarm.urls"))
 }
 
 type Alarm struct {

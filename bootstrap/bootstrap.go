@@ -7,15 +7,16 @@ import (
 	"github.com/duxphp/duxgo/alarm"
 	"github.com/duxphp/duxgo/cache"
 	"github.com/duxphp/duxgo/config"
-	database2 "github.com/duxphp/duxgo/database"
+	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/database"
 	"github.com/duxphp/duxgo/exception"
-	"github.com/duxphp/duxgo/global"
 	"github.com/duxphp/duxgo/logger"
 	"github.com/duxphp/duxgo/register"
 	"github.com/duxphp/duxgo/task"
 	"github.com/duxphp/duxgo/util/function"
 	"github.com/duxphp/duxgo/validator"
 	"github.com/duxphp/duxgo/websocket"
+	"github.com/gookit/color"
 	"github.com/gookit/event"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -29,7 +30,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 )
@@ -56,9 +56,9 @@ func New() *bootstrap {
 // RegisterCore 注册服务
 func (t *bootstrap) RegisterCore() *bootstrap {
 	// 设置时区
-	global.TimeLocation = time.FixedZone("CST", 8*3600)
-	global.Version = Version
-	time.Local = global.TimeLocation
+	core.TimeLocation = time.FixedZone("CST", 8*3600)
+	core.Version = Version
+	time.Local = core.TimeLocation
 
 	// 配置服务
 	config.Init()
@@ -76,13 +76,13 @@ func (t *bootstrap) RegisterCore() *bootstrap {
 	validator.Init()
 
 	// 注册数据库
-	database2.GormInit()
+	database.GormInit()
 
 	// 注册MangoDB
-	database2.QmgoInit()
+	database.QmgoInit()
 
 	// 注册Redis
-	database2.RedisInit()
+	database.RedisInit()
 
 	// 注册队列服务
 	task.Init()
@@ -96,6 +96,7 @@ func (t *bootstrap) RegisterCore() *bootstrap {
 	return t
 }
 
+// Template 模板服务
 type Template struct {
 	templates *template.Template
 }
@@ -104,10 +105,11 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 
+// RegisterHttp 注册http服务
 func (t *bootstrap) RegisterHttp() *bootstrap {
 	// web服务
 	t.app = echo.New()
-	global.App = t.app
+	core.App = t.app
 
 	// 注册模板引擎
 	funcMap := template.FuncMap{
@@ -120,7 +122,7 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 		},
 	}
 	render := &Template{
-		templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(global.ViewsFs, "views/*", "app/*/views/*")),
+		templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.ViewsFs, "views/*", "app/*/views/*")),
 	}
 
 	t.app.Renderer = render
@@ -137,14 +139,14 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 		} else {
 			msg = err.Error()
 			body := function.CtxBody(c)
-			global.Logger.Error().Bytes("body", body).Err(err).Msg("error")
+			core.Logger.Error().Bytes("body", body).Err(err).Msg("error")
 		}
 		err = c.JSON(code, map[string]any{
 			"code":    code,
 			"message": msg,
 		})
 		if err != nil {
-			global.Logger.Error().Err(err).Send()
+			core.Logger.Error().Err(err).Send()
 		}
 	}
 
@@ -153,7 +155,7 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 		StackSize: 4 << 10, // 1 KB
 		LogLevel:  log.ERROR,
 		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
-			global.Logger.Error().Err(err).Msg("PANIC RECOVER")
+			core.Logger.Error().Err(err).Msg("PANIC RECOVER")
 			return exception.Internal(err)
 		},
 	}))
@@ -175,7 +177,7 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 	}
 
 	// 链接超时
-	timeout := global.Config["app"].GetInt("server.timeout")
+	timeout := core.Config["app"].GetInt("server.timeout")
 	t.app.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Skipper: func(c echo.Context) bool {
 			if c.IsWebSocket() {
@@ -189,7 +191,7 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 
 	// 注册静态路由
 	t.app.Static("/uploads", "./uploads")
-	t.app.StaticFS("/", echo.MustSubFS(global.StaticFs, "public"))
+	t.app.StaticFS("/", echo.MustSubFS(core.StaticFs, "public"))
 
 	// 前端中间件
 	t.app.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -204,14 +206,14 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 	t.app.Use(middleware.RequestID())
 
 	// 访问日志
-	if global.Config["app"].GetBool("logger.request.status") {
+	if core.Config["app"].GetBool("logger.request.status") {
 		vLog := logger.New(
-			global.Config["app"].GetString("logger.request.level"),
-			global.Config["app"].GetString("logger.request.path"),
-			global.Config["app"].GetInt("logger.request.maxSize"),
-			global.Config["app"].GetInt("logger.request.maxBackups"),
-			global.Config["app"].GetInt("logger.request.maxAge"),
-			global.Config["app"].GetBool("logger.request.compress"),
+			core.Config["app"].GetString("logger.request.level"),
+			core.Config["app"].GetString("logger.request.path"),
+			core.Config["app"].GetInt("logger.request.maxSize"),
+			core.Config["app"].GetInt("logger.request.maxBackups"),
+			core.Config["app"].GetInt("logger.request.maxAge"),
+			core.Config["app"].GetBool("logger.request.compress"),
 		).With().Timestamp().Logger()
 		t.app.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 			LogURI:       true,
@@ -342,7 +344,7 @@ func (t *bootstrap) StartTask() *bootstrap {
 	for _, name := range register.AppIndex {
 		appConfig := register.AppList[name]
 		if appConfig.Queue != nil {
-			appConfig.Queue(global.QueueMux)
+			appConfig.Queue(core.QueueMux)
 		}
 	}
 
@@ -350,117 +352,104 @@ func (t *bootstrap) StartTask() *bootstrap {
 	for _, name := range register.AppIndex {
 		appConfig := register.AppList[name]
 		if appConfig.Scheduler != nil {
-			appConfig.Scheduler(global.Scheduler)
+			appConfig.Scheduler(core.Scheduler)
 		}
 	}
 	//启动队列与调度服务
 	go func() {
-		global.Logger.Info().Msg("start scheduler service")
 		task.StartScheduler()
 
 	}()
-	global.Logger.Info().Msg("start queue service")
 	task.StartQueue()
 	return t
 }
 
+// StopTask 停止任务服务
 func (t *bootstrap) StopTask() {
-	global.Logger.Info().Msg("stop queue service")
-	global.Queue.Shutdown()
-	global.Logger.Info().Msg("stop scheduler service")
-	global.Scheduler.Shutdown()
+	core.Queue.Shutdown()
+	core.Scheduler.Shutdown()
 }
 
+// StartHttp 启动http服务
+
 func (t *bootstrap) StartHttp() {
+
 	// ping 队列服务
 	task.Add("ping", &map[string]any{})
 
-	prot := global.Config["app"].GetString("server.port")
-	debug := global.Config["app"].GetBool("server.debug")
+	prot := core.Config["app"].GetString("server.port")
+	debug := core.Config["app"].GetBool("server.debug")
 
 	data, _ := json.MarshalIndent(t.app.Routes(), "", "  ")
 	ioutil.WriteFile("./routes.json", data, 0644)
 
 	t.app.HideBanner = true
 
-	var logo string
+	var banner string
+	banner += `   _____           ____ ____` + "\n"
+	banner += `  / __  \__ ______/ ___/ __ \` + "\n"
+	banner += ` / /_/ / /_/ /> </ (_ / /_/ /` + "\n"
+	banner += `/_____/\_,__/_/\_\___/\____/  v` + Version + "\n"
 
-	const (
-		cBlack   = "\u001b[90m"
-		cRed     = "\u001b[91m"
-		cCyan    = "\u001b[96m"
-		cGreen   = "\u001b[92m"
-		cYellow  = "\u001b[93m"
-		cBlue    = "\u001b[94m"
-		cMagenta = "\u001b[95m"
-		cWhite   = "\u001b[97m"
-		cReset   = "\u001b[0m"
-	)
-
-	value := func(s string, width int) string {
-		pad := width - len(s)
-		str := ""
-		for i := 0; i < pad; i++ {
-			str += "."
-		}
-		if s == "Disabled" {
-			str += " " + s
-		} else {
-			str += fmt.Sprintf(" %s%s%s", cCyan, s, cBlack)
-		}
-		return str
+	type item struct {
+		Name  string
+		Value any
 	}
 
-	centerValue := func(s string, width int) string {
-		pad := strconv.Itoa((width - len(s)) / 2)
-		str := fmt.Sprintf("%"+pad+"s", " ")
-		str += fmt.Sprintf("%s%s%s", cCyan, s, cBlack)
-		str += fmt.Sprintf("%"+pad+"s", " ")
-		if len(str)-10 < width {
-			str += " "
-		}
-		return str
-	}
+	sysMaps := []item{}
+	sysMaps = append(sysMaps, item{
+		Name:  "Echo",
+		Value: echo.Version,
+	})
+	sysMaps = append(sysMaps, item{
+		Name:  "Debug",
+		Value: lo.Ternary[string](debug, "enabled", "disabled"),
+	})
+	sysMaps = append(sysMaps, item{
+		Name:  "PID",
+		Value: os.Getpid(),
+	})
+	sysMaps = append(sysMaps, item{
+		Name:  "Routes",
+		Value: len(t.app.Routes()),
+	})
 
-	logo += cBlack + " ┌───────────────────────────────────────────────────┐\n"
-	logo += cBlack + " │ " + centerValue(" DuxGO v"+Version, 49) + " │\n"
-	logo += cBlack + " │ " + centerValue("simple and fast development framework", 49) + " │\n"
-	logo += cBlack + " │                                                   │\n"
-	logo += fmt.Sprintf(cBlack+" │ Echo Ver %s  Routes %s │\n", value(echo.Version, 14), value(strconv.Itoa(len(t.app.Routes())), 15))
-	logo += fmt.Sprintf(cBlack+" │ Debug .%s  PID ....%s │\n", value(lo.Ternary[string](debug, "enabled", "disabled"), 16), value(strconv.Itoa(os.Getpid()), 14))
-	logo += cBlack + " └───────────────────────────────────────────────────┘\n" + cReset
-	fmt.Print(logo)
+	banner += "⇨ "
+	for _, v := range sysMaps {
+		banner += v.Name + " <green>" + fmt.Sprintf("%v", v.Value) + "</>  "
+	}
+	banner += "\n"
+	color.Print(banner)
 
 	// 记录启动时间
-	global.BootTime = time.Now()
+	core.BootTime = time.Now()
 
 	// 启动http服务
 	go func() {
 		serverAddr := ":" + prot
 		err := t.app.Start(serverAddr)
 		if err != nil {
-			global.Logger.Error().Err(err).Msg("http stop")
+			core.Logger.Error().Err(err).Msg("http stop")
 		}
 	}()
 }
 
+// StopHttp 停止http服务
 func (t *bootstrap) StopHttp() {
-	global.Logger.Info().Msg("trigger a shutdown event")
 	err, _ := event.Fire("app.close", event.M{})
 	if err != nil {
-		global.Logger.Error().Err(err).Msg("event stop")
+		core.Logger.Error().Err(err).Msg("event stop")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	global.Logger.Info().Msg("stop the web service")
 
 	if err := t.app.Shutdown(ctx); err != nil {
-		global.Logger.Error().Err(err).Msg("http stop")
+		core.Logger.Error().Err(err).Msg("http stop")
 	}
 }
 
+// Release 释放服务
 func (t *bootstrap) Release() {
-	global.Logger.Info().Msg("stop ants service")
 	websocket.ReleaseSocket()
 	ants.Release()
 	os.Exit(0)

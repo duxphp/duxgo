@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/duxphp/duxgo/global"
+	"github.com/duxphp/duxgo/core"
 	"github.com/duxphp/duxgo/validator"
 	"github.com/labstack/echo/v4"
 )
@@ -12,7 +12,7 @@ func RequestParser(ctx echo.Context, params any) error {
 	if err = ctx.Bind(params); err != nil {
 		return err
 	}
-	err = global.Validator.Struct(params)
+	err = core.Validator.Struct(params)
 	if err = validator.ProcessError(params, err); err != nil {
 		return err
 	}
@@ -25,7 +25,7 @@ func QueryParser(ctx echo.Context, params any) error {
 	if err = ctx.Bind(params); err != nil {
 		return err
 	}
-	err = global.Validator.Struct(params)
+	err = core.Validator.Struct(params)
 	if err = validator.ProcessError(params, err); err != nil {
 		return err
 	}

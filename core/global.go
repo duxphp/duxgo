@@ -1,4 +1,4 @@
-package global
+package core
 
 import (
 	"context"

@@ -3,7 +3,7 @@ package table
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/duxphp/duxgo/global"
+	"github.com/duxphp/duxgo/core"
 	"github.com/duxphp/duxgo/ui/node"
 	function2 "github.com/duxphp/duxgo/util/function"
 	"github.com/gookit/goutil/maputil"
@@ -84,7 +84,7 @@ func (t *Table) DataOrder(key string, desc ...bool) *Table {
 // SetModel 设置模型模式
 func (t *Table) SetModel(mode any, primary string) *Table {
 	t.model = mode
-	t.modelDB = global.Db.Model(mode)
+	t.modelDB = core.Db.Model(mode)
 	t.primary = primary
 	return t
 }

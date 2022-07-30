@@ -2,7 +2,7 @@ package duxgo
 
 import (
 	"github.com/duxphp/duxgo/bootstrap"
-	"github.com/duxphp/duxgo/global"
+	"github.com/duxphp/duxgo/core"
 )
 
 type Server struct {
@@ -20,7 +20,7 @@ func (s *Server) Register(call func(*Server)) {
 
 // SetConfigDir 设置配置目录
 func (s *Server) SetConfigDir(dir string) {
-	global.ConfigDir = dir
+	core.ConfigDir = dir
 }
 
 // Start 启动服务

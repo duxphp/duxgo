@@ -1,7 +1,8 @@
 package logger
 
 import (
-	"github.com/duxphp/duxgo/global"
+	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/util/function"
 	"github.com/rs/zerolog"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"os"
@@ -9,13 +10,19 @@ import (
 )
 
 func Init() {
-	global.Logger = New(
-		global.Config["app"].GetString("logger.default.level"),
-		global.Config["app"].GetString("logger.default.path"),
-		global.Config["app"].GetInt("logger.default.maxSize"),
-		global.Config["app"].GetInt("logger.default.maxBackups"),
-		global.Config["app"].GetInt("logger.default.maxAge"),
-		global.Config["app"].GetBool("logger.default.compress"),
+	path := core.Config["app"].GetString("logger.default.path")
+	if !function.IsExist(path) {
+		if !function.CreateDir(path) {
+			panic("failed to create log directory")
+		}
+	}
+	core.Logger = New(
+		core.Config["app"].GetString("logger.default.level"),
+		path,
+		core.Config["app"].GetInt("logger.default.maxSize"),
+		core.Config["app"].GetInt("logger.default.maxBackups"),
+		core.Config["app"].GetInt("logger.default.maxAge"),
+		core.Config["app"].GetBool("logger.default.compress"),
 	).With().Timestamp().Caller().Logger()
 }
 

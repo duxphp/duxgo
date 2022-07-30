@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 	"errors"
-	"github.com/duxphp/duxgo/global"
+	"github.com/duxphp/duxgo/core"
 	coreLogger "github.com/duxphp/duxgo/logger"
 	"github.com/rs/zerolog"
 	"gorm.io/driver/mysql"
@@ -14,7 +14,7 @@ import (
 )
 
 func GormInit() {
-	dbConfig := global.Config["database"].GetStringMapString("db")
+	dbConfig := core.Config["database"].GetStringMapString("db")
 	if dbConfig["type"] == "mysql" {
 		database, err := gorm.Open(mysql.Open(dbConfig["username"]+":"+dbConfig["password"]+"@tcp("+dbConfig["host"]+":"+dbConfig["port"]+")/"+dbConfig["dbname"]+"?charset=utf8mb4&parseTime=True&loc=Local"), &gorm.Config{
 			NamingStrategy: schema.NamingStrategy{
@@ -26,13 +26,13 @@ func GormInit() {
 		if err != nil {
 			panic("database error: " + err.Error())
 		}
-		global.Db = database
-		sqlDB, err := global.Db.DB()
+		core.Db = database
+		sqlDB, err := core.Db.DB()
 		if err != nil {
 			panic("database error: " + err.Error())
 		}
-		sqlDB.SetMaxIdleConns(global.Config["app"].GetInt("database.maxIdleConns"))
-		sqlDB.SetMaxOpenConns(global.Config["app"].GetInt("database.maxOpenConns"))
+		sqlDB.SetMaxIdleConns(core.Config["app"].GetInt("database.maxIdleConns"))
+		sqlDB.SetMaxOpenConns(core.Config["app"].GetInt("database.maxOpenConns"))
 	}
 }
 
@@ -46,12 +46,12 @@ type logger struct {
 
 func GormLogger() *logger {
 	vLog := coreLogger.New(
-		global.Config["app"].GetString("logger.db.level"),
-		global.Config["app"].GetString("logger.db.path"),
-		global.Config["app"].GetInt("logger.db.maxSize"),
-		global.Config["app"].GetInt("logger.db.maxBackups"),
-		global.Config["app"].GetInt("logger.db.maxAge"),
-		global.Config["app"].GetBool("logger.db.compress"),
+		core.Config["app"].GetString("logger.db.level"),
+		core.Config["app"].GetString("logger.db.path"),
+		core.Config["app"].GetInt("logger.db.maxSize"),
+		core.Config["app"].GetInt("logger.db.maxBackups"),
+		core.Config["app"].GetInt("logger.db.maxAge"),
+		core.Config["app"].GetBool("logger.db.compress"),
 	).With().Caller().CallerWithSkipFrameCount(5).Timestamp().Logger()
 
 	return &logger{
