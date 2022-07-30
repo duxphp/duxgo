@@ -132,13 +132,28 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 			body := function.CtxBody(c)
 			core.Logger.Error().Bytes("body", body).Err(err).Msg("error")
 		}
-		err = c.JSON(code, map[string]any{
-			"code":    code,
-			"message": msg,
-		})
-		if err != nil {
-			core.Logger.Error().Err(err).Send()
+
+		// AJAX请求
+		if function.IsAjax(c) {
+			err = c.JSON(code, map[string]any{
+				"code":    code,
+				"message": msg,
+			})
+			if err != nil {
+				core.Logger.Error().Err(err).Send()
+			}
+			return
 		}
+		// WEB请求
+		if code == http.StatusNotFound {
+			_ = core.Tpl.ExecuteTemplate(c.Response(), "404.html", nil)
+		} else {
+			_ = core.Tpl.ExecuteTemplate(c.Response(), "500.html", map[string]any{
+				"code":    code,
+				"message": msg,
+			})
+		}
+
 	}
 
 	// 异常恢复处理
@@ -194,8 +209,9 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	// 关闭自带日志
 	t.App.Logger.SetLevel(log.OFF)
 
+	// 设置默认页面
 	t.App.GET("/", func(c echo.Context) error {
-		err := core.Tpl.ExecuteTemplate(c.Response(), "welcome.gohtml", nil)
+		err := core.Tpl.ExecuteTemplate(c.Response(), "welcome.html", nil)
 		if err != nil {
 			return err
 		}

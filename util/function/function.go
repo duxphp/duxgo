@@ -271,3 +271,16 @@ func CtxBody(ctx echo.Context) []byte {
 	}
 	return s
 }
+
+// IsAjax 是否ajax请求
+func IsAjax(ctx echo.Context) bool {
+	xr := ctx.Request().Header.Get("X-Requested-With")
+	if xr != "" && strings.Index(xr, "XMLHttpRequest") != -1 {
+		return true
+	}
+	accept := ctx.Request().Header.Get("Accept")
+	if strings.Index(accept, "/json") != -1 || strings.Index(accept, "/+json") != -1 {
+		return true
+	}
+	return false
+}
