@@ -1,6 +1,7 @@
 package duxgo
 
 import (
+	"embed"
 	"github.com/duxphp/duxgo/bootstrap"
 	"github.com/duxphp/duxgo/core"
 	"github.com/duxphp/duxgo/database"
@@ -77,10 +78,17 @@ func (s *Server) SetWebsocketStatus(status bool) {
 	s.ServerStatus.websocket = status
 }
 
+//go:embed template/*
+var tplFs embed.FS
+
 // Start 启动服务
 func (s *Server) Start() {
+	// 设置系统模板
+	core.TplFs = tplFs
+
 	// 初始化启动服务
 	t := bootstrap.New()
+
 	// 注册核心服务
 	t.RegisterCore()
 

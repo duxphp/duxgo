@@ -105,10 +105,16 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 
 	if core.ViewsFs != nil {
 		render := &Template{
-			templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.ViewsFs, "views/*", "App/*/views/*")),
+			templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(*core.ViewsFs, "views/*", "App/*/views/*")),
 		}
 		t.App.Renderer = render
 	}
+
+	tpl, err := template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.TplFs, "template/*")
+	if err != nil {
+		return nil
+	}
+	core.Tpl = tpl
 
 	// 注册异常处理
 	t.App.HTTPErrorHandler = func(err error, c echo.Context) {
@@ -187,7 +193,11 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	t.App.Logger.SetLevel(log.OFF)
 
 	t.App.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
+		err := core.Tpl.ExecuteTemplate(c.Response(), "template/welcome.tpl", nil)
+		if err != nil {
+			return err
+		}
+		return nil
 	})
 
 	// 注册请求ID
