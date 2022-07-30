@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/duxphp/duxgo/alarm"
 	"github.com/duxphp/duxgo/cache"
@@ -432,8 +433,8 @@ func (t *Bootstrap) StartHttp() {
 	go func() {
 		serverAddr := ":" + prot
 		err := t.App.Start(serverAddr)
-		if err != nil {
-			core.Logger.Error().Err(err).Msg("http stop")
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			core.Logger.Error().Err(err).Msg("web")
 		}
 	}()
 }
