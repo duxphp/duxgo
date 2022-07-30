@@ -179,7 +179,7 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	}
 
 	// 链接超时
-	timeout := core.Config["App"].GetInt("server.timeout")
+	timeout := core.Config["app"].GetInt("server.timeout")
 	t.App.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Skipper: func(c echo.Context) bool {
 			if c.IsWebSocket() {
@@ -208,14 +208,14 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	t.App.Use(middleware.RequestID())
 
 	// 访问日志
-	if core.Config["App"].GetBool("logger.request.status") {
+	if core.Config["app"].GetBool("logger.request.status") {
 		vLog := logger.New(
-			core.Config["App"].GetString("logger.request.level"),
-			core.Config["App"].GetString("logger.request.path"),
-			core.Config["App"].GetInt("logger.request.maxSize"),
-			core.Config["App"].GetInt("logger.request.maxBackups"),
-			core.Config["App"].GetInt("logger.request.maxAge"),
-			core.Config["App"].GetBool("logger.request.compress"),
+			core.Config["app"].GetString("logger.request.level"),
+			core.Config["app"].GetString("logger.request.path"),
+			core.Config["app"].GetInt("logger.request.maxSize"),
+			core.Config["app"].GetInt("logger.request.maxBackups"),
+			core.Config["app"].GetInt("logger.request.maxAge"),
+			core.Config["app"].GetBool("logger.request.compress"),
 		).With().Timestamp().Logger()
 		t.App.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 			LogURI:       true,
@@ -381,8 +381,8 @@ func (t *Bootstrap) StartHttp() {
 
 	fmt.Println(core.DebugMsg)
 
-	prot := core.Config["App"].GetString("server.port")
-	debug := core.Config["App"].GetBool("server.debug")
+	prot := core.Config["app"].GetString("server.port")
+	debug := core.Config["app"].GetBool("server.debug")
 
 	data, _ := json.MarshalIndent(t.App.Routes(), "", "  ")
 	ioutil.WriteFile("./routes.json", data, 0644)
