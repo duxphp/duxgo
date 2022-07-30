@@ -186,6 +186,11 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	// 关闭自带日志
 	t.App.Logger.SetLevel(log.OFF)
 
+	t.App.GET("/", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hello, World!")
+	})
+
+	// 注册请求ID
 	t.App.Use(middleware.RequestID())
 
 	// 访问日志
