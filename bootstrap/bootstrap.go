@@ -357,9 +357,6 @@ func (t *Bootstrap) StopTask() {
 
 func (t *Bootstrap) StartHttp() {
 
-	// ping 队列服务
-	task.Add("ping", &map[string]any{})
-
 	prot := core.Config["app"].GetString("server.port")
 	debug := core.Config["app"].GetBool("server.debug")
 

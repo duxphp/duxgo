@@ -124,6 +124,7 @@ func (s *Server) Start() {
 	// 启动队列服务
 	if s.ServerStatus.queue {
 		go t.StartTask()
+		task.Add("ping", &map[string]any{})
 	}
 	// 启动WEB服务
 	t.StartHttp()
