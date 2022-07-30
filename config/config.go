@@ -17,6 +17,8 @@ func Init() {
 	if err != nil {
 		panic("configuration loading failure")
 	}
+	core.Logger.Info().Interface("configFiles", configFiles).Msg("configuration loading")
+
 	for _, file := range configFiles {
 		filename := path.Base(file)
 		suffix := path.Ext(file)
