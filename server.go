@@ -6,16 +6,22 @@ import (
 )
 
 type Server struct {
-	registerList []func(*Server)
+	registerApp     []func(*bootstrap.Bootstrap)
+	registerService []func(*bootstrap.Bootstrap)
 }
 
 func New() *Server {
 	return &Server{}
 }
 
-// Register 注册启动服务
-func (s *Server) Register(call func(*Server)) {
-	s.registerList = append(s.registerList, call)
+// RegisterApp 注册应用
+func (s *Server) RegisterApp(call func(*bootstrap.Bootstrap)) {
+	s.registerApp = append(s.registerApp, call)
+}
+
+// RegisterService 注册服务
+func (s *Server) RegisterService(call func(*bootstrap.Bootstrap)) {
+	s.registerService = append(s.registerService, call)
 }
 
 // SetConfigDir 设置配置目录
@@ -29,12 +35,16 @@ func (s *Server) Start() {
 	t := bootstrap.New()
 	// 注册核心服务
 	t.RegisterCore()
-	// 注册服务应用
-	for _, call := range s.registerList {
-		call(s)
+	// 注册应用
+	for _, call := range s.registerApp {
+		call(t)
 	}
 	// 注册WEB服务
 	t.RegisterHttp()
+	// 注册服务
+	for _, call := range s.registerService {
+		call(t)
+	}
 	// 注册应用服务
 	t.RegisterApp()
 	// 启动队列服务

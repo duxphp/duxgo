@@ -36,25 +36,25 @@ import (
 
 const Version = "0.1.0"
 
-type bootstrap struct {
-	app *echo.Echo
+type Bootstrap struct {
+	App *echo.Echo
 	Ch  chan os.Signal
 }
 
 // New 启动器
-func New() *bootstrap {
+func New() *Bootstrap {
 	var ch = make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt,
 		syscall.SIGINT,
 		syscall.SIGQUIT,
 		syscall.SIGTERM)
-	return &bootstrap{
+	return &Bootstrap{
 		Ch: ch,
 	}
 }
 
 // RegisterCore 注册服务
-func (t *bootstrap) RegisterCore() *bootstrap {
+func (t *Bootstrap) RegisterCore() *Bootstrap {
 	// 设置时区
 	core.TimeLocation = time.FixedZone("CST", 8*3600)
 	core.Version = Version
@@ -106,10 +106,10 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 }
 
 // RegisterHttp 注册http服务
-func (t *bootstrap) RegisterHttp() *bootstrap {
+func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	// web服务
-	t.app = echo.New()
-	core.App = t.app
+	t.App = echo.New()
+	core.App = t.App
 
 	// 注册模板引擎
 	funcMap := template.FuncMap{
@@ -122,13 +122,13 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 		},
 	}
 	render := &Template{
-		templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.ViewsFs, "views/*", "app/*/views/*")),
+		templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.ViewsFs, "views/*", "App/*/views/*")),
 	}
 
-	t.app.Renderer = render
+	t.App.Renderer = render
 
 	// 注册异常处理
-	t.app.HTTPErrorHandler = func(err error, c echo.Context) {
+	t.App.HTTPErrorHandler = func(err error, c echo.Context) {
 		code := http.StatusInternalServerError
 		var msg any
 		if e, ok := err.(*exception.CoreError); ok {
@@ -151,7 +151,7 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 	}
 
 	// 异常恢复处理
-	t.app.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
+	t.App.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
 		StackSize: 4 << 10, // 1 KB
 		LogLevel:  log.ERROR,
 		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
@@ -161,7 +161,7 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 	}))
 
 	// IP 获取规则
-	t.app.IPExtractor = func(req *http.Request) string {
+	t.App.IPExtractor = func(req *http.Request) string {
 		remoteAddr := req.RemoteAddr
 		if ip := req.Header.Get(echo.HeaderXRealIP); ip != "" {
 			remoteAddr = ip
@@ -177,8 +177,8 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 	}
 
 	// 链接超时
-	timeout := core.Config["app"].GetInt("server.timeout")
-	t.app.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
+	timeout := core.Config["App"].GetInt("server.timeout")
+	t.App.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Skipper: func(c echo.Context) bool {
 			if c.IsWebSocket() {
 				return true
@@ -190,32 +190,32 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 	}))
 
 	// 注册静态路由
-	t.app.Static("/uploads", "./uploads")
-	t.app.StaticFS("/", echo.MustSubFS(core.StaticFs, "public"))
+	t.App.Static("/uploads", "./uploads")
+	t.App.StaticFS("/", echo.MustSubFS(core.StaticFs, "public"))
 
 	// 前端中间件
-	t.app.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+	t.App.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:  []string{"*"},
 		AllowHeaders:  []string{echo.HeaderContentType, echo.HeaderOrigin, echo.HeaderAccept, echo.HeaderXCSRFToken, echo.HeaderAuthorization, "X-dux-sfc", "x-dialog", "AccessKey", "X-Dux-Platform", "Content-MD5", "Content-Date"},
 		ExposeHeaders: []string{"*"},
 	}))
 
 	// 关闭自带日志
-	t.app.Logger.SetLevel(log.OFF)
+	t.App.Logger.SetLevel(log.OFF)
 
-	t.app.Use(middleware.RequestID())
+	t.App.Use(middleware.RequestID())
 
 	// 访问日志
-	if core.Config["app"].GetBool("logger.request.status") {
+	if core.Config["App"].GetBool("logger.request.status") {
 		vLog := logger.New(
-			core.Config["app"].GetString("logger.request.level"),
-			core.Config["app"].GetString("logger.request.path"),
-			core.Config["app"].GetInt("logger.request.maxSize"),
-			core.Config["app"].GetInt("logger.request.maxBackups"),
-			core.Config["app"].GetInt("logger.request.maxAge"),
-			core.Config["app"].GetBool("logger.request.compress"),
+			core.Config["App"].GetString("logger.request.level"),
+			core.Config["App"].GetString("logger.request.path"),
+			core.Config["App"].GetInt("logger.request.maxSize"),
+			core.Config["App"].GetInt("logger.request.maxBackups"),
+			core.Config["App"].GetInt("logger.request.maxAge"),
+			core.Config["App"].GetBool("logger.request.compress"),
 		).With().Timestamp().Logger()
-		t.app.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		t.App.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 			LogURI:       true,
 			LogHost:      true,
 			LogStatus:    true,
@@ -246,7 +246,7 @@ func (t *bootstrap) RegisterHttp() *bootstrap {
 }
 
 // RegisterApp 注册应用
-func (t *bootstrap) RegisterApp() *bootstrap {
+func (t *Bootstrap) RegisterApp() *Bootstrap {
 	// 注册模型
 	for _, name := range register.AppIndex {
 		appConfig := register.AppList[name]
@@ -259,7 +259,7 @@ func (t *bootstrap) RegisterApp() *bootstrap {
 	for _, name := range register.AppIndex {
 		appConfig := register.AppList[name]
 		if appConfig.Register != nil {
-			appConfig.Register(t.app)
+			appConfig.Register(t.App)
 		}
 	}
 
@@ -267,7 +267,7 @@ func (t *bootstrap) RegisterApp() *bootstrap {
 	for _, name := range register.AppIndex {
 		appConfig := register.AppList[name]
 		if appConfig.AppRoute != nil {
-			appConfig.AppRoute(register.AppRouter, t.app)
+			appConfig.AppRoute(register.AppRouter, t.App)
 		}
 	}
 
@@ -283,7 +283,7 @@ func (t *bootstrap) RegisterApp() *bootstrap {
 	for _, name := range register.AppIndex {
 		appConfig := register.AppList[name]
 		if appConfig.AppRouteAuth != nil {
-			appConfig.AppRouteAuth(register.AppRouter, t.app)
+			appConfig.AppRouteAuth(register.AppRouter, t.App)
 		}
 	}
 
@@ -331,7 +331,7 @@ func (t *bootstrap) RegisterApp() *bootstrap {
 	for _, name := range register.AppIndex {
 		appConfig := register.AppList[name]
 		if appConfig.Boot != nil {
-			appConfig.Boot(t.app)
+			appConfig.Boot(t.App)
 		}
 	}
 
@@ -339,7 +339,7 @@ func (t *bootstrap) RegisterApp() *bootstrap {
 }
 
 // StartTask 开启任务服务
-func (t *bootstrap) StartTask() *bootstrap {
+func (t *Bootstrap) StartTask() *Bootstrap {
 	// 队列注册
 	for _, name := range register.AppIndex {
 		appConfig := register.AppList[name]
@@ -365,25 +365,25 @@ func (t *bootstrap) StartTask() *bootstrap {
 }
 
 // StopTask 停止任务服务
-func (t *bootstrap) StopTask() {
+func (t *Bootstrap) StopTask() {
 	core.Queue.Shutdown()
 	core.Scheduler.Shutdown()
 }
 
 // StartHttp 启动http服务
 
-func (t *bootstrap) StartHttp() {
+func (t *Bootstrap) StartHttp() {
 
 	// ping 队列服务
 	task.Add("ping", &map[string]any{})
 
-	prot := core.Config["app"].GetString("server.port")
-	debug := core.Config["app"].GetBool("server.debug")
+	prot := core.Config["App"].GetString("server.port")
+	debug := core.Config["App"].GetBool("server.debug")
 
-	data, _ := json.MarshalIndent(t.app.Routes(), "", "  ")
+	data, _ := json.MarshalIndent(t.App.Routes(), "", "  ")
 	ioutil.WriteFile("./routes.json", data, 0644)
 
-	t.app.HideBanner = true
+	t.App.HideBanner = true
 
 	var banner string
 	banner += `   _____           ____ ____` + "\n"
@@ -411,7 +411,7 @@ func (t *bootstrap) StartHttp() {
 	})
 	sysMaps = append(sysMaps, item{
 		Name:  "Routes",
-		Value: len(t.app.Routes()),
+		Value: len(t.App.Routes()),
 	})
 
 	banner += "⇨ "
@@ -427,7 +427,7 @@ func (t *bootstrap) StartHttp() {
 	// 启动http服务
 	go func() {
 		serverAddr := ":" + prot
-		err := t.app.Start(serverAddr)
+		err := t.App.Start(serverAddr)
 		if err != nil {
 			core.Logger.Error().Err(err).Msg("http stop")
 		}
@@ -435,21 +435,21 @@ func (t *bootstrap) StartHttp() {
 }
 
 // StopHttp 停止http服务
-func (t *bootstrap) StopHttp() {
-	err, _ := event.Fire("app.close", event.M{})
+func (t *Bootstrap) StopHttp() {
+	err, _ := event.Fire("App.close", event.M{})
 	if err != nil {
 		core.Logger.Error().Err(err).Msg("event stop")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := t.app.Shutdown(ctx); err != nil {
+	if err := t.App.Shutdown(ctx); err != nil {
 		core.Logger.Error().Err(err).Msg("http stop")
 	}
 }
 
 // Release 释放服务
-func (t *bootstrap) Release() {
+func (t *Bootstrap) Release() {
 	websocket.ReleaseSocket()
 	ants.Release()
 	os.Exit(0)
