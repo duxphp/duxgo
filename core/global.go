@@ -31,6 +31,8 @@ var (
 	TimeLocation *time.Location
 	// Ctx Context
 	Ctx = context.Background()
+	// DirList 目录列表
+	DirList = []string{}
 	// TplFs 系统视图
 	TplFs embed.FS
 	// Tpl 系统模板视图

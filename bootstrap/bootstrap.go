@@ -87,6 +87,9 @@ func (t *Bootstrap) RegisterCore() *Bootstrap {
 	tpl := template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.TplFs, "template/*"))
 	core.Tpl = tpl
 
+	// 注册目录
+	core.DirList = append(core.DirList, "uploads")
+
 	return t
 }
 
@@ -384,6 +387,19 @@ func (t *Bootstrap) StopTask() {
 // StartHttp 启动http服务
 
 func (t *Bootstrap) StartHttp() {
+
+	// 自动创建目录
+	str, _ := os.Getwd()
+	dirList := []string{
+		"uploads",
+	}
+	for _, path := range dirList {
+		if !function.IsExist(str + path) {
+			if !function.CreateDir(str + path) {
+				panic("failed to create " + path + " directory")
+			}
+		}
+	}
 
 	prot := core.Config["app"].GetString("server.port")
 	debug := core.Config["app"].GetBool("server.debug")

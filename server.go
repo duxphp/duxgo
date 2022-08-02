@@ -73,11 +73,6 @@ func (s *Server) SetQueueStatus(status bool) {
 	s.ServerStatus.queue = status
 }
 
-// SetWebsocketStatus 设置websocket状态
-func (s *Server) SetWebsocketStatus(status bool) {
-	s.ServerStatus.websocket = status
-}
-
 //go:embed template/*
 var tplFs embed.FS
 
@@ -107,10 +102,6 @@ func (s *Server) Start() {
 	// 注册队列
 	if s.ServerStatus.queue {
 		task.Init()
-	}
-	// 注册websocket
-	if s.ServerStatus.websocket {
-		websocket.Init()
 	}
 
 	// 注册应用
