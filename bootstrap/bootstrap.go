@@ -103,20 +103,17 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 		},
 	}
 
+	// 注册系统模板
+	tpl := template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.TplFs, "template/*"))
+	core.Tpl = tpl
+
 	// 注册模板引擎
 	if core.ViewsFs != nil {
 		render := &Template{
-			templates: template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(*core.ViewsFs, "views/*", "app/*/views/*")),
+			templates: template.Must(tpl.ParseFS(*core.ViewsFs, "views/*", "app/*/views/*")),
 		}
 		t.App.Renderer = render
 	}
-
-	// 注册系统模板
-	tpl, err := template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.TplFs, "template/*")
-	if err != nil {
-		return nil
-	}
-	core.Tpl = tpl
 
 	// 注册异常处理
 	t.App.HTTPErrorHandler = func(err error, c echo.Context) {
