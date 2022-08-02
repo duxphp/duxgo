@@ -390,10 +390,7 @@ func (t *Bootstrap) StartHttp() {
 
 	// 自动创建目录
 	str, _ := os.Getwd()
-	dirList := []string{
-		"uploads",
-	}
-	for _, path := range dirList {
+	for _, path := range core.DirList {
 		if !function.IsExist(str + path) {
 			if !function.CreateDir(str + path) {
 				panic("failed to create " + path + " directory")
