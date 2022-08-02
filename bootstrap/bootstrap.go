@@ -74,6 +74,19 @@ func (t *Bootstrap) RegisterCore() *Bootstrap {
 	// 注册验证器
 	validator.Init()
 
+	// 注册模板引擎
+	funcMap := template.FuncMap{
+		"unescape": func(s string) template.HTML {
+			return template.HTML(s)
+		},
+		"marshal": func(v interface{}) template.JS {
+			a, _ := json.Marshal(v)
+			return template.JS(a)
+		},
+	}
+	tpl := template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.TplFs, "template/*"))
+	core.Tpl = tpl
+
 	return t
 }
 
@@ -92,31 +105,9 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	t.App = echo.New()
 	core.App = t.App
 
-	// 注册模板引擎
-	funcMap := template.FuncMap{
-		"unescape": func(s string) template.HTML {
-			return template.HTML(s)
-		},
-		"marshal": func(v interface{}) template.JS {
-			a, _ := json.Marshal(v)
-			return template.JS(a)
-		},
-	}
-
-	// 注册系统模板
-	tpl := template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.TplFs, "template/*"))
-	core.Tpl = tpl
-
-	// 注册模板引擎
-	//if core.ViewsFs != nil {
-	//	render := &Template{
-	//		templates: template.Must(tpl.ParseFS(*core.ViewsFs, "views/*", "app/*/views/*")),
-	//	}
-	//	t.App.Renderer = render
-	//}
-
+	// 注册模板
 	render := &Template{
-		templates: tpl,
+		templates: core.Tpl,
 	}
 	t.App.Renderer = render
 
