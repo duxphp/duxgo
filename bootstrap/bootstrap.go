@@ -108,12 +108,17 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	core.Tpl = tpl
 
 	// 注册模板引擎
-	if core.ViewsFs != nil {
-		render := &Template{
-			templates: template.Must(tpl.ParseFS(*core.ViewsFs, "views/*", "app/*/views/*")),
-		}
-		t.App.Renderer = render
+	//if core.ViewsFs != nil {
+	//	render := &Template{
+	//		templates: template.Must(tpl.ParseFS(*core.ViewsFs, "views/*", "app/*/views/*")),
+	//	}
+	//	t.App.Renderer = render
+	//}
+
+	render := &Template{
+		templates: tpl,
 	}
+	t.App.Renderer = render
 
 	// 注册异常处理
 	t.App.HTTPErrorHandler = func(err error, c echo.Context) {
