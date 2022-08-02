@@ -25,26 +25,13 @@ func Init() {
 		core.Config[name] = LoadConfig(name)
 	}
 
-	// 解析媒体文件
-	//jsonPath, err := duxgo.StaticFs.Open("public/manifest.json")
-	//if err != nil {
-	//	panic(err.Error())
-	//}
-	//config := viper.New()
-	//config.SetConfigType("json")
-	//err = config.ReadConfig(jsonPath)
-	//if err != nil {
-	//	panic(err.Error())
-	//}
-	//jsonPath.Close()
-	//duxgo.ConfigManifest = config.GetStringMap("src/main.js")
-
 	// 调试配置
 	core.Debug = core.Config["app"].GetBool("server.debug")
 	core.DebugMsg = core.Config["app"].GetString("server.debugMsg")
 
 }
 
+// LoadConfig 加载配置
 func LoadConfig(name string) *viper.Viper {
 	config := viper.New()
 	config.SetConfigName(name)
@@ -55,4 +42,13 @@ func LoadConfig(name string) *viper.Viper {
 		panic(err)
 	}
 	return config
+}
+
+// Get 获取配置
+func Get(name string) *viper.Viper {
+	if t, ok := core.Config[name]; ok {
+		return t
+	} else {
+		panic("configuration (" + name + ") not found")
+	}
 }

@@ -31,8 +31,6 @@ var (
 	TimeLocation *time.Location
 	// Ctx Context
 	Ctx = context.Background()
-	//ViewsFs 应用视图
-	//ViewsFs *embed.FS
 	// TplFs 系统视图
 	TplFs embed.FS
 	// Tpl 系统模板视图
@@ -40,7 +38,6 @@ var (
 	// Config 通用配置
 	Config    = map[string]*viper.Viper{}
 	ConfigDir = "./config/"
-	// ConfigManifest map[string]any
 	// Logger 日志服务
 	Logger zerolog.Logger
 	// Alarm 消息通知
