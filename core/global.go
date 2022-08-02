@@ -32,7 +32,7 @@ var (
 	// Ctx Context
 	Ctx = context.Background()
 	//ViewsFs 应用视图
-	ViewsFs *embed.FS
+	//ViewsFs *embed.FS
 	// TplFs 系统视图
 	TplFs embed.FS
 	// Tpl 系统模板视图
