@@ -153,13 +153,13 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	}
 
 	// 异常恢复处理
-	t.App.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
-		StackSize: 4 << 10, // 1 KB
-		LogLevel:  log.ERROR,
-		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
-			return exception.Internal(err)
-		},
-	}))
+	//t.App.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
+	//	StackSize: 4 << 10, // 1 KB
+	//	LogLevel:  log.ERROR,
+	//	LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
+	//		return exception.Internal(err)
+	//	},
+	//}))
 
 	// IP 获取规则
 	t.App.IPExtractor = func(req *http.Request) string {
