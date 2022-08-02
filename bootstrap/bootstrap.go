@@ -88,7 +88,7 @@ func (t *Bootstrap) RegisterCore() *Bootstrap {
 	core.Tpl = tpl
 
 	// 注册目录
-	core.DirList = []string{"./uploads"}
+	core.DirList = []string{"./uploads", "./logs", "./config", "./app", "./tmp", "./logs/service"}
 
 	return t
 }
