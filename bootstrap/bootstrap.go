@@ -88,7 +88,7 @@ func (t *Bootstrap) RegisterCore() *Bootstrap {
 	core.Tpl = tpl
 
 	// 注册目录
-	core.DirList = []string{"uploads"}
+	core.DirList = []string{"./uploads"}
 
 	return t
 }
@@ -389,10 +389,9 @@ func (t *Bootstrap) StopTask() {
 func (t *Bootstrap) StartHttp() {
 
 	// 自动创建目录
-	str, _ := os.Getwd()
 	for _, path := range core.DirList {
-		if !function.IsExist(str + path) {
-			if !function.CreateDir(str + path) {
+		if !function.IsExist(path) {
+			if !function.CreateDir(path) {
 				panic("failed to create " + path + " directory")
 			}
 		}

@@ -108,6 +108,10 @@ func (s *Server) Start() {
 	if s.ServerStatus.queue {
 		task.Init()
 	}
+	// 注册websocket
+	if s.ServerStatus.websocket {
+		websocket.Init()
+	}
 
 	// 注册应用
 	for _, call := range s.registerApp {
