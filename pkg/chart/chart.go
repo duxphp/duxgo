@@ -1,8 +1,8 @@
 package chart
 
 import (
-	"duxgo/core/util/function"
 	"encoding/json"
+	"github.com/duxphp/duxgo/util/function"
 	"github.com/golang-module/carbon/v2"
 	"github.com/jianfengye/collection"
 	"github.com/spf13/cast"
