@@ -10,11 +10,13 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang-module/carbon/v2 v2.1.9
 	github.com/gookit/color v1.5.1
 	github.com/gookit/event v1.0.6
 	github.com/gorilla/websocket v1.5.0
 	github.com/h2non/filetype v1.1.3
 	github.com/hibiken/asynq v0.23.0
+	github.com/jianfengye/collection v1.4.1
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/labstack/gommon v0.3.1
 	github.com/panjf2000/ants/v2 v2.5.0
@@ -31,6 +33,8 @@ require (
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gorm.io/driver/mysql v1.3.5
+	gorm.io/driver/postgres v1.3.9
+	gorm.io/driver/sqlite v1.3.6
 	gorm.io/gorm v1.23.8
 )
 
@@ -48,12 +52,18 @@ require (
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
-	github.com/golang-module/carbon/v2 v2.1.9 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/jianfengye/collection v1.4.1 // indirect
+	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
+	github.com/jackc/pgconn v1.12.1 // indirect
+	github.com/jackc/pgio v1.0.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgproto3/v2 v2.3.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
+	github.com/jackc/pgtype v1.11.0 // indirect
+	github.com/jackc/pgx/v4 v4.16.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/kevinburke/go-bindata v3.22.0+incompatible // indirect
@@ -62,6 +72,7 @@ require (
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-sqlite3 v1.14.12 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect

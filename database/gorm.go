@@ -3,10 +3,13 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/duxphp/duxgo/core"
 	coreLogger "github.com/duxphp/duxgo/logger"
 	"github.com/rs/zerolog"
 	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
@@ -15,25 +18,41 @@ import (
 
 func GormInit() {
 	dbConfig := core.Config["database"].GetStringMapString("db")
+
+	var connect gorm.Dialector
 	if dbConfig["type"] == "mysql" {
-		database, err := gorm.Open(mysql.Open(dbConfig["username"]+":"+dbConfig["password"]+"@tcp("+dbConfig["host"]+":"+dbConfig["port"]+")/"+dbConfig["dbname"]+"?charset=utf8mb4&parseTime=True&loc=Local"), &gorm.Config{
-			NamingStrategy: schema.NamingStrategy{
-				TablePrefix:   "app_",
-				SingularTable: true,
-			},
-			Logger: GormLogger(),
-		})
-		if err != nil {
-			panic("database error: " + err.Error())
-		}
-		core.Db = database
-		sqlDB, err := core.Db.DB()
-		if err != nil {
-			panic("database error: " + err.Error())
-		}
-		sqlDB.SetMaxIdleConns(core.Config["app"].GetInt("database.maxIdleConns"))
-		sqlDB.SetMaxOpenConns(core.Config["app"].GetInt("database.maxOpenConns"))
+		connect = mysql.Open(dbConfig["username"] + ":" + dbConfig["password"] + "@tcp(" + dbConfig["host"] + ":" + dbConfig["port"] + ")/" + dbConfig["dbname"] + "?charset=utf8mb4&parseTime=True&loc=Local")
 	}
+	if dbConfig["type"] == "postgresql" {
+		connect = postgres.Open(fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+			dbConfig["host"],
+			dbConfig["username"],
+			dbConfig["password"],
+			dbConfig["dbname"],
+			dbConfig["port"],
+		))
+	}
+	if dbConfig["type"] == "sqlite" {
+		connect = sqlite.Open(dbConfig["file"])
+	}
+	database, err := gorm.Open(connect, &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix:   "app_",
+			SingularTable: true,
+		},
+		Logger: GormLogger(),
+	})
+	if err != nil {
+		panic("database error: " + err.Error())
+	}
+	core.Db = database
+	sqlDB, err := core.Db.DB()
+	if err != nil {
+		panic("database error: " + err.Error())
+	}
+	sqlDB.SetMaxIdleConns(core.Config["app"].GetInt("database.maxIdleConns"))
+	sqlDB.SetMaxOpenConns(core.Config["app"].GetInt("database.maxOpenConns"))
+
 }
 
 type logger struct {
