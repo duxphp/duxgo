@@ -113,7 +113,7 @@ func Add(typename string, params any, priority ...Priority) *asynq.TaskInfo {
 	if len(priority) > 0 {
 		group = priority[0]
 	}
-	return addTask(typename, params, asynq.Queue(string(group)))
+	return AddTask(typename, params, asynq.Queue(string(group)))
 }
 
 // AddDelay 延迟队列（秒）
@@ -122,7 +122,7 @@ func AddDelay(typename string, params any, t time.Duration, priority ...Priority
 	if len(priority) > 0 {
 		group = priority[0]
 	}
-	return addTask(typename, params, asynq.ProcessIn(t), asynq.Queue(string(group)))
+	return AddTask(typename, params, asynq.ProcessIn(t), asynq.Queue(string(group)))
 }
 
 // AddTime 定时队列（秒）
@@ -131,11 +131,11 @@ func AddTime(typename string, params any, t time.Time, priority ...Priority) *as
 	if len(priority) > 0 {
 		group = priority[0]
 	}
-	return addTask(typename, params, asynq.ProcessAt(t), asynq.Queue(string(group)))
+	return AddTask(typename, params, asynq.ProcessAt(t), asynq.Queue(string(group)))
 }
 
-// 添加队列任务
-func addTask(typename string, params any, opts ...asynq.Option) *asynq.TaskInfo {
+// AddTask 添加队列任务
+func AddTask(typename string, params any, opts ...asynq.Option) *asynq.TaskInfo {
 	payload, _ := json.Marshal(params)
 	task := asynq.NewTask(typename, payload)
 	opts = append(opts, asynq.MaxRetry(3))            // 重试3次
