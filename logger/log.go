@@ -48,6 +48,7 @@ func Init() {
 			config.MaxBackups,
 			config.MaxAge,
 			config.Compress,
+			false,
 		))
 	}
 
@@ -63,7 +64,7 @@ func New(writers ...io.Writer) zerolog.Logger {
 }
 
 // GetWriter 获取日志驱动
-func GetWriter(level string, path string, maxSize int, maxBackups int, maxAge int, compress bool) *LevelWriter {
+func GetWriter(level string, path string, maxSize int, maxBackups int, maxAge int, compress bool, recursion bool) *LevelWriter {
 	parseLevel, _ := zerolog.ParseLevel(level)
 	return &LevelWriter{zerolog.MultiLevelWriter(&lumberjack.Logger{
 		Filename:   path,       // 日志文件路径
@@ -71,19 +72,23 @@ func GetWriter(level string, path string, maxSize int, maxBackups int, maxAge in
 		MaxBackups: maxBackups, // 日志文件最多保存多少个备份
 		MaxAge:     maxAge,     // 文件最多保存多少天
 		Compress:   compress,   // 是否压缩
-	}), parseLevel}
+	}), parseLevel, recursion}
 }
 
 type LevelWriter struct {
-	w     zerolog.LevelWriter
-	level zerolog.Level
+	w         zerolog.LevelWriter
+	level     zerolog.Level
+	recursion bool
 }
 
 func (w *LevelWriter) Write(p []byte) (n int, err error) {
 	return w.w.Write(p)
 }
 func (w *LevelWriter) WriteLevel(level zerolog.Level, p []byte) (n int, err error) {
-	if level >= w.level {
+	if level >= w.level && w.recursion {
+		return w.w.WriteLevel(level, p)
+	}
+	if level == w.level && !w.recursion {
 		return w.w.WriteLevel(level, p)
 	}
 	return len(p), nil
