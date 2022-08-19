@@ -222,12 +222,14 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	// 访问日志
 	if core.Config["app"].GetBool("logger.request.status") {
 		vLog := logger.New(
-			core.Config["app"].GetString("logger.request.level"),
-			core.Config["app"].GetString("logger.request.path"),
-			core.Config["app"].GetInt("logger.request.maxSize"),
-			core.Config["app"].GetInt("logger.request.maxBackups"),
-			core.Config["app"].GetInt("logger.request.maxAge"),
-			core.Config["app"].GetBool("logger.request.compress"),
+			logger.GetWriter(
+				core.Config["app"].GetString("logger.request.level"),
+				core.Config["app"].GetString("logger.request.path")+"/http.log",
+				core.Config["app"].GetInt("logger.request.maxSize"),
+				core.Config["app"].GetInt("logger.request.maxBackups"),
+				core.Config["app"].GetInt("logger.request.maxAge"),
+				core.Config["app"].GetBool("logger.request.compress"),
+			),
 		).With().Timestamp().Logger()
 		t.App.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 			LogURI:       true,

@@ -65,13 +65,14 @@ type logger struct {
 
 func GormLogger() *logger {
 	vLog := coreLogger.New(
-		core.Config["app"].GetString("logger.db.level"),
-		core.Config["app"].GetString("logger.db.path"),
-		core.Config["app"].GetInt("logger.db.maxSize"),
-		core.Config["app"].GetInt("logger.db.maxBackups"),
-		core.Config["app"].GetInt("logger.db.maxAge"),
-		core.Config["app"].GetBool("logger.db.compress"),
-	).With().Caller().CallerWithSkipFrameCount(5).Timestamp().Logger()
+		coreLogger.GetWriter(
+			core.Config["app"].GetString("logger.db.level"),
+			core.Config["app"].GetString("logger.db.path")+"/gorm.log",
+			core.Config["app"].GetInt("logger.db.maxSize"),
+			core.Config["app"].GetInt("logger.db.maxBackups"),
+			core.Config["app"].GetInt("logger.db.maxAge"),
+			core.Config["app"].GetBool("logger.db.compress"),
+		)).With().Caller().CallerWithSkipFrameCount(5).Timestamp().Logger()
 
 	return &logger{
 		SlowThreshold:             1 * time.Second,
