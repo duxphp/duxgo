@@ -400,7 +400,7 @@ func (t *Bootstrap) StartHttp() {
 		}
 	}
 
-	prot := core.Config["app"].GetString("server.port")
+	port := core.Config["app"].GetString("server.port")
 	debug := core.Config["app"].GetBool("server.debug")
 
 	data, _ := json.MarshalIndent(t.App.Routes(), "", "  ")
@@ -449,7 +449,7 @@ func (t *Bootstrap) StartHttp() {
 
 	// 启动http服务
 	go func() {
-		serverAddr := ":" + prot
+		serverAddr := ":" + port
 		err := t.App.Start(serverAddr)
 		if errors.Is(err, http.ErrServerClosed) {
 			color.Print("\n⇨ <red>Server closed</>\n")
