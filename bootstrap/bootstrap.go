@@ -224,7 +224,7 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 		vLog := logger.New(
 			logger.GetWriter(
 				core.Config["app"].GetString("logger.request.level"),
-				core.Config["app"].GetString("logger.request.path")+"/http.log",
+				core.Config["app"].GetString("logger.request.path")+"/web.log",
 				core.Config["app"].GetInt("logger.request.maxSize"),
 				core.Config["app"].GetInt("logger.request.maxBackups"),
 				core.Config["app"].GetInt("logger.request.maxAge"),
