@@ -72,6 +72,7 @@ func GormLogger() *logger {
 			core.Config["app"].GetInt("logger.db.maxBackups"),
 			core.Config["app"].GetInt("logger.db.maxAge"),
 			core.Config["app"].GetBool("logger.db.compress"),
+			true,
 		)).With().Caller().CallerWithSkipFrameCount(5).Timestamp().Logger()
 
 	return &logger{

@@ -229,6 +229,7 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 				core.Config["app"].GetInt("logger.request.maxBackups"),
 				core.Config["app"].GetInt("logger.request.maxAge"),
 				core.Config["app"].GetBool("logger.request.compress"),
+				true,
 			),
 		).With().Timestamp().Logger()
 		t.App.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
