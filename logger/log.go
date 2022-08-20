@@ -17,7 +17,6 @@ type loggerConfig struct {
 	MaxBackups int
 	MaxAge     int
 	Compress   bool
-	Level      string
 }
 
 // Init 初始化日志
@@ -36,17 +35,24 @@ func Init() {
 		MaxBackups: core.Config["app"].GetInt("logger.default.maxBackups"),
 		MaxAge:     core.Config["app"].GetInt("logger.default.maxAge"),
 		Compress:   core.Config["app"].GetBool("logger.default.compress"),
-		Level:      core.Config["app"].GetString("logger.default.level"),
 	}
-	core.Logger = New(GetWriter(
-		config.Level,
-		fmt.Sprintf("%s/app.log", config.Path),
-		config.MaxSize,
-		config.MaxBackups,
-		config.MaxAge,
-		config.Compress,
-		true,
-	)).With().Timestamp().Caller().Logger()
+
+	// 初始化默认日志，根据日志等级分别输出
+	writerList := []io.Writer{}
+	levels := []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
+	for _, level := range levels {
+		writerList = append(writerList, GetWriter(
+			level,
+			fmt.Sprintf("%s/%s.log", config.Path, level),
+			config.MaxSize,
+			config.MaxBackups,
+			config.MaxAge,
+			config.Compress,
+			false,
+		))
+	}
+
+	core.Logger = New(writerList...).With().Timestamp().Caller().Logger()
 }
 
 // New 新建日志
