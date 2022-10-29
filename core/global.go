@@ -21,6 +21,8 @@ var (
 	Version string
 	// BootTime 启动时间
 	BootTime time.Time
+	// TablePrefix 表前缀
+	TablePrefix = "app_"
 	// App echo
 	App *echo.Echo
 	// Debug 调试模式

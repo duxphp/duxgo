@@ -37,7 +37,7 @@ func GormInit() {
 	}
 	database, err := gorm.Open(connect, &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
-			TablePrefix:   "app_",
+			TablePrefix:   core.TablePrefix,
 			SingularTable: true,
 		},
 		Logger: GormLogger(),

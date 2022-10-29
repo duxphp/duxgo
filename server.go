@@ -48,6 +48,11 @@ func (s *Server) RegisterService(calls ...func(*bootstrap.Bootstrap)) {
 	s.registerService = append(s.registerService, calls...)
 }
 
+// SetTablePrefix 设置数据表前缀
+func (s *Server) SetTablePrefix(prefix string) {
+	core.TablePrefix = prefix
+}
+
 // SetConfigDir 设置配置目录
 func (s *Server) SetConfigDir(dir string) {
 	core.ConfigDir = dir
