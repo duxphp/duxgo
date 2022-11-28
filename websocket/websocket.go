@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/panjf2000/ants/v2"
-	"github.com/spf13/cast"
 	"net/http"
 	"sync"
 	"time"
@@ -46,21 +45,22 @@ type Service struct {
 }
 
 type Client struct {
-	Auth    string
-	Login   func(data string) (map[string]any, error)
-	User    *User
-	Socket  *websocket.Conn
-	Mutex   sync.Mutex
-	Send    chan *Message
-	Message []byte
-	Service *Service
+	Auth      string
+	Login     func(data string) (map[string]any, error)
+	User      *User
+	Socket    *websocket.Conn
+	Mutex     sync.Mutex
+	Send      chan *Message
+	Message   []byte
+	Service   *Service
+	accountId string
 }
 
-type Users map[uint]*User
+type Users map[string]*User
 type Clients map[*Client]bool
 
 type User struct {
-	ID     uint
+	ID     string
 	Auth   string
 	Client *Client
 }
@@ -95,7 +95,7 @@ func New() *Service {
 }
 
 // Handler 消息处理
-func (r *Service) Handler(auth string, login func(data string) (map[string]any, error)) func(c echo.Context) error {
+func (r *Service) Handler(auth string, accountId string) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		var err error
 		// 设置客户端信息
@@ -111,7 +111,7 @@ func (r *Service) Handler(auth string, login func(data string) (map[string]any, 
 		client.Service = r
 		client.Send = make(chan *Message)
 		client.Auth = auth
-		client.Login = login
+		client.accountId = accountId
 
 		// 注册客户端
 		r.Register <- &client
@@ -220,6 +220,18 @@ func (r *Service) Start() {
 				}
 				r.Clients[client.Auth][client] = true
 				client.SendMsg("coon", "successful connection to socket service")
+
+				// 登录 client
+				if r.Users[client.Auth] == nil {
+					r.Users[client.Auth] = map[string]*User{}
+				}
+				user := &User{
+					ID:     client.accountId,
+					Client: client,
+				}
+				r.Users[client.Auth][client.accountId] = user
+				client.User = user
+				client.SendMsg("login", "login successful")
 			case client := <-r.Unregister:
 				// 注销 channel
 				client.Close()
@@ -236,34 +248,14 @@ func (r *Service) Start() {
 					continue
 				}
 				switch MessageStruct.Type {
-				// 登录
-				case "login":
-					var userInfo map[string]any
-					// 鉴权数据获取
-					userInfo, err = data.Client.Login(cast.ToString(MessageStruct.Data))
-					if err != nil {
-						data.Client.SendMsg("err", err.Error())
-						data.Client.Close()
-					}
-					UID := cast.ToUint(userInfo["id"])
-					if r.Users[data.Client.Auth] == nil {
-						r.Users[data.Client.Auth] = map[uint]*User{}
-					}
-					user := &User{
-						ID:     UID,
-						Client: data.Client,
-					}
-					r.Users[data.Client.Auth][UID] = user
-					data.Client.User = user
-					data.Client.SendMsg("login", "登录成功")
 				case "ping":
 					data.Client.SendMsg("pong", "")
 				default:
-					if data.Client.User == nil {
-						data.Client.SendMsg("error", "未授权登录")
-						data.Client.Socket.WriteMessage(websocket.CloseMessage, []byte{})
-						continue
-					}
+					//if data.Client.User == nil {
+					//	data.Client.SendMsg("error", "未授权登录")
+					//	data.Client.Socket.WriteMessage(websocket.CloseMessage, []byte{})
+					//	continue
+					//}
 					r.Pool.Submit(func() {
 						event.Fire("websocket."+MessageStruct.Type, map[string]any{
 							"client":  data.Client,
