@@ -44,6 +44,7 @@ type Service struct {
 	Register   chan *Client
 	Unregister chan *Client
 	Pool       *ants.Pool
+	Login      func(data string) (map[string]any, error)
 }
 
 type Client struct {
@@ -235,8 +236,15 @@ func (r *Service) Start() {
 				switch MessageStruct.Type {
 				// 登录
 				case "login":
-					userInfo, err := middleware.NewJWT().ParsingToken(data.Client.Auth, cast.ToString(MessageStruct.Data))
+					var userInfo map[string]any
+					// 鉴权数据获取
+					if r.Login != nil {
+						userInfo, err = r.Login(cast.ToString(MessageStruct.Data))
+					} else {
+						userInfo, err = middleware.NewJWT().ParsingToken(data.Client.Auth, cast.ToString(MessageStruct.Data))
+					}
 					if err != nil {
+						data.Client.SendMsg("err", err.Error())
 						data.Client.Close()
 					}
 					UID := cast.ToUint(userInfo["id"])
