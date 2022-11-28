@@ -95,6 +95,12 @@ func New() *Service {
 	}
 }
 
+// SetLogin 设置登录回调
+func (r *Service) SetLogin(callback func(data string) (map[string]any, error)) {
+	r.Login = callback
+}
+
+// Handler 消息处理
 func (r *Service) Handler(auth string) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		var err error
