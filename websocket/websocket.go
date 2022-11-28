@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/middleware"
 	"github.com/gookit/event"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
@@ -44,11 +43,11 @@ type Service struct {
 	Register   chan *Client
 	Unregister chan *Client
 	Pool       *ants.Pool
-	Login      func(data string) (map[string]any, error)
 }
 
 type Client struct {
 	Auth    string
+	Login   func(data string) (map[string]any, error)
 	User    *User
 	Socket  *websocket.Conn
 	Mutex   sync.Mutex
@@ -95,13 +94,8 @@ func New() *Service {
 	}
 }
 
-// SetLogin 设置登录回调
-func (r *Service) SetLogin(callback func(data string) (map[string]any, error)) {
-	r.Login = callback
-}
-
 // Handler 消息处理
-func (r *Service) Handler(auth string) func(c echo.Context) error {
+func (r *Service) Handler(auth string, login func(data string) (map[string]any, error)) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		var err error
 		// 设置客户端信息
@@ -117,6 +111,8 @@ func (r *Service) Handler(auth string) func(c echo.Context) error {
 		client.Service = r
 		client.Send = make(chan *Message)
 		client.Auth = auth
+		client.Login = login
+
 		// 注册客户端
 		r.Register <- &client
 
@@ -244,11 +240,7 @@ func (r *Service) Start() {
 				case "login":
 					var userInfo map[string]any
 					// 鉴权数据获取
-					if r.Login != nil {
-						userInfo, err = r.Login(cast.ToString(MessageStruct.Data))
-					} else {
-						userInfo, err = middleware.NewJWT().ParsingToken(data.Client.Auth, cast.ToString(MessageStruct.Data))
-					}
+					userInfo, err = data.Client.Login(cast.ToString(MessageStruct.Data))
 					if err != nil {
 						data.Client.SendMsg("err", err.Error())
 						data.Client.Close()
