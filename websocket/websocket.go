@@ -323,10 +323,19 @@ func (c *Client) SendMsg(Type string, message string, datas ...any) bool {
 	return true
 }
 
+func (c *Client) SendUserMsg(accountId string, Type string, message string, datas ...any) bool {
+	user, ok := c.Service.Users[c.Auth][accountId]
+	if !ok {
+		return false
+	}
+	user.Client.SendMsg(Type, message, datas)
+	return true
+}
+
 // GetUser 根据id获取用户信息
 func (c *Client) GetUser(accountId string) *User {
-	if _, ok := c.Service.Users[c.Auth][accountId]; ok {
-		return c.Service.Users[c.Auth][accountId]
+	if user, ok := c.Service.Users[c.Auth][accountId]; ok {
+		return user
 	}
 	return nil
 }
