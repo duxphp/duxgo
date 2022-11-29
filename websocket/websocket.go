@@ -323,6 +323,14 @@ func (c *Client) SendMsg(Type string, message string, datas ...any) bool {
 	return true
 }
 
+// GetUser 根据id获取用户信息
+func (c *Client) GetUser(accountId string) *User {
+	if _, ok := c.Service.Users[c.Auth][accountId]; ok {
+		return c.Service.Users[c.Auth][accountId]
+	}
+	return nil
+}
+
 // Event 事件对接
 func Event(name string, call func(client *Client, message *Message) error) {
 	event.On("websocket."+name, event.ListenerFunc(func(e event.Event) error {
