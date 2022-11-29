@@ -232,7 +232,21 @@ func (r *Service) Start() {
 				r.Users[client.Auth][client.accountId] = user
 				client.User = user
 				client.SendMsg("login", "login successful")
+
+				// 通知用户上线
+				r.Pool.Submit(func() {
+					event.Fire("websocket.online", map[string]any{
+						"client": client,
+					})
+				})
+
 			case client := <-r.Unregister:
+				// 通知用户下线
+				r.Pool.Submit(func() {
+					event.Fire("websocket.offline", map[string]any{
+						"client": client,
+					})
+				})
 				// 注销 channel
 				client.Close()
 			case data := <-r.Broadcast:
