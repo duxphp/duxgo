@@ -86,8 +86,8 @@ func (s *Upload) Upload(file any, name string) (*upload.File, error) {
 			}
 		}
 	}
-	core.Logger.Debug().Msg("upload test")
 	var Type = core.Config["storage"].GetString("driver.type")
+	core.Logger.Debug().Interface("type", Type).Msg("upload test")
 	up, err := upload.New(Type, s.getConfig())
 	if err != nil {
 		return nil, err
