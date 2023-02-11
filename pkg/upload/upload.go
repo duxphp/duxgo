@@ -3,6 +3,7 @@ package upload
 import (
 	"bytes"
 	"fmt"
+	"github.com/duxphp/duxgo/core"
 	"github.com/duxphp/duxgo/exception"
 	"github.com/duxphp/duxgo/util/function"
 	"github.com/h2non/filetype"
@@ -95,6 +96,7 @@ func (t *Upload) Save(file []byte, name string, dir string) (*File, error) {
 	if ext == "" {
 		ext = realExt
 	}
+	core.Logger.Debug().Msg("upload save")
 	ext = strings.Trim(ext, ".")
 	reader := bytes.NewReader(file)
 	filename := dir + "/" + function.Md5(string(file)) + "." + ext
@@ -103,6 +105,7 @@ func (t *Upload) Save(file []byte, name string, dir string) (*File, error) {
 		return nil, exception.Internal(err)
 	}
 	url := t.Url + "/" + filename
+	core.Logger.Debug().Msg("upload save2")
 
 	return &File{
 		Url:      url,
