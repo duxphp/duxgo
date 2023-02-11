@@ -2,6 +2,7 @@ package upload
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
 	"github.com/duxphp/duxgo/core"
 	"github.com/duxphp/duxgo/exception"
@@ -99,9 +100,16 @@ func (t *Upload) Save(file []byte, name string, dir string) (*File, error) {
 	core.Logger.Debug().Msg("upload save")
 	ext = strings.Trim(ext, ".")
 	reader := bytes.NewReader(file)
+
+	gzReader, err := gzip.NewReader(reader)
+	if err != nil {
+		return nil, exception.Internal(err)
+	}
+	fmt.Println(gzReader)
+
 	filename := dir + "/" + function.Md5(string(file)) + "." + ext
 	core.Logger.Debug().Interface("filename", filename).Interface("file", file).Interface("reader", reader).Msg("upload save2")
-	_, err := t.Store.Write(filename, reader, int64(length))
+	_, err = t.Store.Write(filename, gzReader, int64(length))
 	if err != nil {
 		return nil, exception.Internal(err)
 	}
