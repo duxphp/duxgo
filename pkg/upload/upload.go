@@ -105,7 +105,7 @@ func (t *Upload) Save(file []byte, name string, dir string) (*File, error) {
 	core.Logger.Debug().Interface("test", reader.Size()).Send()
 
 	filename := dir + "/" + function.Md5(string(file)) + "." + ext
-	_, err := t.Store.Write(filename, reader, int64(length))
+	_, err := t.Store.Write(filename, reader, reader.Size())
 	if err != nil {
 		return nil, exception.Internal(err)
 	}
