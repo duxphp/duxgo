@@ -100,7 +100,7 @@ func (t *Upload) Save(file []byte, name string, dir string) (*File, error) {
 	ext = strings.Trim(ext, ".")
 	reader := bytes.NewReader(file)
 	filename := dir + "/" + function.Md5(string(file)) + "." + ext
-	core.Logger.Debug().Interface("filename", filename).Interface("reader", reader).Msg("upload save2")
+	core.Logger.Debug().Interface("filename", filename).Interface("file", file).Interface("reader", reader).Msg("upload save2")
 	_, err := t.Store.Write(filename, reader, int64(length))
 	if err != nil {
 		return nil, exception.Internal(err)
