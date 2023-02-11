@@ -96,16 +96,17 @@ func (t *Upload) Save(file []byte, name string, dir string) (*File, error) {
 	if ext == "" {
 		ext = realExt
 	}
-	core.Logger.Debug().Interface("file", file).Msg("upload save")
+	core.Logger.Debug().Msg("upload save")
 	ext = strings.Trim(ext, ".")
 	reader := bytes.NewReader(file)
 	filename := dir + "/" + function.Md5(string(file)) + "." + ext
+	core.Logger.Debug().Interface("filename", filename).Interface("reader", reader).Msg("upload save2")
 	_, err := t.Store.Write(filename, reader, int64(length))
 	if err != nil {
 		return nil, exception.Internal(err)
 	}
 	url := t.Url + "/" + filename
-	core.Logger.Debug().Msg("upload save2")
+	core.Logger.Debug().Msg("upload save3")
 
 	return &File{
 		Url:      url,
