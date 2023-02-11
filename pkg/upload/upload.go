@@ -66,7 +66,7 @@ func New(driver string, driverConfig any) (*Upload, error) {
 		store, err = kodo.Init(kodo.Config{
 			AccessKey: config.AccountName,
 			Bucket:    config.Bucket,
-			Domain:    config.Domain,
+			Domain:    config.Domain + "/uploads",
 			SecretKey: config.AccountKey,
 		})
 		if err != nil {
