@@ -2,15 +2,12 @@ package upload
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/duxphp/duxgo/exception"
 	"github.com/duxphp/duxgo/util/function"
 	"github.com/h2non/filetype"
-	_ "go.beyondstorage.io/services/fs/v4"
-	_ "go.beyondstorage.io/services/kodo/v3"
-	_ "go.beyondstorage.io/services/oss/v3"
-	"go.beyondstorage.io/v5/services"
-	"go.beyondstorage.io/v5/types"
+	"github.com/taokunTeam/go-storage/kodo"
+	"github.com/taokunTeam/go-storage/local"
+	"github.com/taokunTeam/go-storage/storage"
 	"path/filepath"
 	"strings"
 )
@@ -18,7 +15,7 @@ import (
 type Upload struct {
 	File   *[]byte
 	Driver string
-	Store  types.Storager
+	Store  storage.Storage
 	Url    string
 }
 
@@ -44,8 +41,9 @@ type ConfigOss struct {
 
 // New 上传对象
 func New(driver string, driverConfig any) (*Upload, error) {
-	driverStr := ""
 	url := ""
+	var store storage.Storage
+	var err error
 	switch driver {
 	case "local":
 		config := driverConfig.(ConfigLocal)
@@ -53,22 +51,35 @@ func New(driver string, driverConfig any) (*Upload, error) {
 		if err != nil {
 			return nil, exception.Internal(err)
 		}
-		driverStr = fmt.Sprintf("fs://%v", abs+"/")
+
+		store, err = local.Init(local.Config{
+			RootDir: abs,
+			AppUrl:  config.UrlPath,
+		})
+		if err != nil {
+			return nil, err
+		}
 		url = config.UrlPath
 	case "qiniu":
 		config := driverConfig.(ConfigQiniu)
-		driverStr = fmt.Sprintf("kodo://%v/uploads/?credential=hmac:%v:%v&endpoint=%v", config.Bucket, config.AccountName, config.AccountKey, config.Domain)
-		url = config.Domain + "/uploads"
-	case "oss":
-		config := driverConfig.(ConfigOss)
-		driverStr = fmt.Sprintf("oss://%v/uploads/?credential=hmac:%v:%v&endpoint=https:%v.aliyuncs.com", config.Bucket, config.AccountName, config.AccountKey, config.Location)
+
+		store, err = kodo.Init(kodo.Config{
+			AccessKey: config.AccountName,
+			Bucket:    config.Bucket,
+			Domain:    config.Domain,
+			SecretKey: config.AccountKey,
+		})
+		if err != nil {
+			return nil, err
+		}
+		//driverStr = fmt.Sprintf("kodo://%v/uploads/?credential=hmac:%v:%v&endpoint=%v", config.Bucket, config.AccountName, config.AccountKey, config.Domain)
 		url = config.Domain + "/uploads"
 	}
 
-	store, err := services.NewStoragerFromString(driverStr)
-	if err != nil {
-		return nil, exception.Internal(err)
-	}
+	//store, err := services.NewStoragerFromString(driverStr)
+	//if err != nil {
+	//	return nil, exception.Internal(err)
+	//}
 
 	return &Upload{
 		Driver: driver,
@@ -103,7 +114,7 @@ func (t *Upload) Save(file []byte, name string, dir string) (*File, error) {
 	}
 
 	filename := dir + "/" + function.Md5(string(file)) + "." + ext
-	_, err := t.Store.Write(filename, reader, reader.Size())
+	err := t.Store.Put(filename, reader, int64(length), kind.MIME.Value)
 	if err != nil {
 		return nil, exception.Internal(err)
 	}
