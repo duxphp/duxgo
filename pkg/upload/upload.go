@@ -3,6 +3,7 @@ package upload
 import (
 	"bytes"
 	"fmt"
+	"github.com/duxphp/duxgo/core"
 	"github.com/duxphp/duxgo/exception"
 	"github.com/duxphp/duxgo/util/function"
 	"github.com/h2non/filetype"
@@ -98,9 +99,10 @@ func (t *Upload) Save(file []byte, name string, dir string) (*File, error) {
 	ext = strings.Trim(ext, ".")
 	reader := bytes.NewReader(file)
 
-	if reader == nil {
+	if reader.Len() == 0 {
 		return nil, exception.BusinessError("上传格式错误")
 	}
+	core.Logger.Debug().Interface("test", reader.Size()).Send()
 
 	filename := dir + "/" + function.Md5(string(file)) + "." + ext
 	_, err := t.Store.Write(filename, reader, int64(length))
