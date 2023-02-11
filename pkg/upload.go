@@ -133,7 +133,7 @@ func (s *Upload) getConfig() any {
 	case "local":
 		var localConfig upload.ConfigLocal
 		core.Config["storage"].UnmarshalKey("driver.local", &localConfig)
-		localConfig.UrlPath = core.Config["app"].GetString("app.baseurl") + "/" + localConfig.UrlPath
+		localConfig.UrlPath = core.Config["app"].GetString("app.baseurl")
 		driverConfig = localConfig
 	}
 
