@@ -102,7 +102,7 @@ func (t *Upload) Save(file []byte, name string, dir string) (*File, error) {
 	if reader.Len() == 0 {
 		return nil, exception.BusinessError("上传格式错误")
 	}
-	core.Logger.Debug().Interface("test", reader.Size()).Send()
+	core.Logger.Debug().Interface("test", reader.Size()).Interface("ext", ext).Send()
 
 	filename := dir + "/" + function.Md5(string(file)) + "." + ext
 	_, err := t.Store.Write(filename, reader, reader.Size())
