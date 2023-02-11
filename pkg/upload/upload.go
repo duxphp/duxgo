@@ -96,7 +96,7 @@ func (t *Upload) Save(file []byte, name string, dir string) (*File, error) {
 	if ext == "" {
 		ext = realExt
 	}
-	core.Logger.Debug().Msg("upload save")
+	core.Logger.Debug().Interface("file", file).Msg("upload save")
 	ext = strings.Trim(ext, ".")
 	reader := bytes.NewReader(file)
 	filename := dir + "/" + function.Md5(string(file)) + "." + ext
