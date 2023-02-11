@@ -2,7 +2,7 @@ package upload
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/zlib"
 	"fmt"
 	"github.com/duxphp/duxgo/core"
 	"github.com/duxphp/duxgo/exception"
@@ -101,7 +101,7 @@ func (t *Upload) Save(file []byte, name string, dir string) (*File, error) {
 	ext = strings.Trim(ext, ".")
 	reader := bytes.NewReader(file)
 
-	gzReader, err := gzip.NewReader(reader)
+	gzReader, err := zlib.NewReader(reader)
 	if err != nil {
 		return nil, exception.Internal(err)
 	}
