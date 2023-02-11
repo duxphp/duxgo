@@ -66,14 +66,14 @@ func New(driver string, driverConfig any) (*Upload, error) {
 		store, err = kodo.Init(kodo.Config{
 			AccessKey: config.AccountName,
 			Bucket:    config.Bucket,
-			Domain:    config.Domain + "/uploads",
+			Domain:    config.Domain,
 			SecretKey: config.AccountKey,
 		})
 		if err != nil {
 			return nil, err
 		}
 		//driverStr = fmt.Sprintf("kodo://%v/uploads/?credential=hmac:%v:%v&endpoint=%v", config.Bucket, config.AccountName, config.AccountKey, config.Domain)
-		url = config.Domain + "/uploads"
+		url = config.Domain
 	}
 
 	//store, err := services.NewStoragerFromString(driverStr)
@@ -113,7 +113,7 @@ func (t *Upload) Save(file []byte, name string, dir string) (*File, error) {
 		return nil, exception.BusinessError("上传格式错误")
 	}
 
-	filename := dir + "/" + function.Md5(string(file)) + "." + ext
+	filename := "uploads/" + dir + "/" + function.Md5(string(file)) + "." + ext
 	err := t.Store.Put(filename, reader, int64(length), kind.MIME.Value)
 	if err != nil {
 		return nil, exception.Internal(err)
