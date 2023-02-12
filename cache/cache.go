@@ -2,7 +2,7 @@ package cache
 
 import (
 	"github.com/coocood/freecache"
-	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/v2/core"
 	"runtime/debug"
 )
 

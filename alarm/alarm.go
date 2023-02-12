@@ -1,7 +1,7 @@
 package alarm
 
 import (
-	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/v2/core"
 	"github.com/go-resty/resty/v2"
 	"time"
 )

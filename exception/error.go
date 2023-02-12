@@ -2,7 +2,7 @@ package exception
 
 import (
 	"fmt"
-	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/v2/core"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
 )

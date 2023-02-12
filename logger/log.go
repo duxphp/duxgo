@@ -2,8 +2,8 @@ package logger
 
 import (
 	"fmt"
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/util/function"
+	"github.com/duxphp/duxgo/v2/core"
+	"github.com/duxphp/duxgo/v2/util/function"
 	"github.com/rs/zerolog"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"io"

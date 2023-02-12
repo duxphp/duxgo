@@ -2,7 +2,7 @@ package chart
 
 import (
 	"encoding/json"
-	"github.com/duxphp/duxgo/util/function"
+	"github.com/duxphp/duxgo/v2/util/function"
 	"github.com/golang-module/carbon/v2"
 	"github.com/jianfengye/collection"
 	"github.com/spf13/cast"

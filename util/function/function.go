@@ -5,7 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/v2/core"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"

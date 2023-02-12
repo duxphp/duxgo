@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"errors"
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/exception"
+	"github.com/duxphp/duxgo/v2/core"
+	"github.com/duxphp/duxgo/v2/exception"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"

@@ -3,7 +3,7 @@ package websocket
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/v2/core"
 	"github.com/gookit/event"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"

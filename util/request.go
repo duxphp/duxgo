@@ -1,8 +1,8 @@
 package util
 
 import (
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/validator"
+	"github.com/duxphp/duxgo/v2/core"
+	"github.com/duxphp/duxgo/v2/validator"
 	"github.com/labstack/echo/v4"
 )
 

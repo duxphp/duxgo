@@ -2,11 +2,11 @@ package duxgo
 
 import (
 	"embed"
-	"github.com/duxphp/duxgo/bootstrap"
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/database"
-	"github.com/duxphp/duxgo/task"
-	"github.com/duxphp/duxgo/websocket"
+	"github.com/duxphp/duxgo/v2/bootstrap"
+	"github.com/duxphp/duxgo/v2/core"
+	"github.com/duxphp/duxgo/v2/database"
+	"github.com/duxphp/duxgo/v2/task"
+	"github.com/duxphp/duxgo/v2/websocket"
 )
 
 // Server 服务管理

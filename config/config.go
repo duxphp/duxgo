@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/v2/core"
 	"github.com/spf13/viper"
 	"os"
 	"path"
