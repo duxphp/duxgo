@@ -12,11 +12,14 @@ import (
 	"github.com/duxphp/duxgo/exception"
 	"github.com/duxphp/duxgo/logger"
 	"github.com/duxphp/duxgo/register"
+	"github.com/duxphp/duxgo/route"
 	"github.com/duxphp/duxgo/task"
+	"github.com/duxphp/duxgo/util"
 	"github.com/duxphp/duxgo/util/function"
 	"github.com/duxphp/duxgo/validator"
 	"github.com/gookit/color"
 	"github.com/gookit/event"
+	"github.com/gookit/goutil/fsutil"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -24,7 +27,6 @@ import (
 	"github.com/samber/lo"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -35,9 +37,15 @@ import (
 
 const Version = "0.1.0"
 
+type RouterT map[string]*route.RouterData
+
+type MenuT map[string]*util.MenuData
+
 type Bootstrap struct {
-	App *echo.Echo
-	Ch  chan os.Signal
+	App     *echo.Echo
+	Ch      chan os.Signal
+	Routers RouterT
+	Menus   MenuT
 }
 
 // New 启动器
@@ -48,7 +56,9 @@ func New() *Bootstrap {
 		syscall.SIGQUIT,
 		syscall.SIGTERM)
 	return &Bootstrap{
-		Ch: ch,
+		Ch:      ch,
+		Routers: RouterT{},
+		Menus:   MenuT{},
 	}
 }
 
@@ -264,91 +274,28 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 
 // RegisterApp 注册应用
 func (t *Bootstrap) RegisterApp() *Bootstrap {
-	// 注册模型
+
+	// 初始化
 	for _, name := range register.AppIndex {
 		appConfig := register.AppList[name]
-		if appConfig.Model != nil {
-			appConfig.Model()
+		if appConfig.Init != nil {
+			appConfig.Init(t)
 		}
 	}
 
-	// 注册服务
+	// 注册
 	for _, name := range register.AppIndex {
 		appConfig := register.AppList[name]
 		if appConfig.Register != nil {
-			appConfig.Register(t.App)
+			appConfig.Register(t)
 		}
 	}
 
-	// 应用路由
-	for _, name := range register.AppIndex {
-		appConfig := register.AppList[name]
-		if appConfig.AppRoute != nil {
-			appConfig.AppRoute(register.AppRouter, t.App)
-		}
-	}
-
-	// 注册路由
-	for _, name := range register.AppIndex {
-		appConfig := register.AppList[name]
-		if appConfig.Route != nil {
-			appConfig.Route(register.AppRouter)
-		}
-	}
-
-	// 应用授权路由
-	for _, name := range register.AppIndex {
-		appConfig := register.AppList[name]
-		if appConfig.AppRouteAuth != nil {
-			appConfig.AppRouteAuth(register.AppRouter, t.App)
-		}
-	}
-
-	// 注册授权路由
-	for _, name := range register.AppIndex {
-		appConfig := register.AppList[name]
-		if appConfig.RouteAuth != nil {
-			appConfig.RouteAuth(register.AppRouter)
-		}
-	}
-
-	// 应用菜单
-	for _, name := range register.AppIndex {
-		appConfig := register.AppList[name]
-		if appConfig.AppMenu != nil {
-			appConfig.AppMenu(register.AppMenu)
-		}
-	}
-
-	// 菜单注册
-	for _, name := range register.AppIndex {
-		appConfig := register.AppList[name]
-		if appConfig.Menu != nil {
-			appConfig.Menu(register.AppMenu)
-		}
-	}
-
-	// 事件注册
-	for _, name := range register.AppIndex {
-		appConfig := register.AppList[name]
-		if appConfig.Event != nil {
-			appConfig.Event()
-		}
-	}
-
-	// Socket注册
-	for _, name := range register.AppIndex {
-		appConfig := register.AppList[name]
-		if appConfig.Websocket != nil {
-			appConfig.Websocket()
-		}
-	}
-
-	// 启动服务
+	// 启动
 	for _, name := range register.AppIndex {
 		appConfig := register.AppList[name]
 		if appConfig.Boot != nil {
-			appConfig.Boot(t.App)
+			appConfig.Boot(t)
 		}
 	}
 
@@ -357,21 +304,6 @@ func (t *Bootstrap) RegisterApp() *Bootstrap {
 
 // StartTask 开启任务服务
 func (t *Bootstrap) StartTask() *Bootstrap {
-	// 队列注册
-	for _, name := range register.AppIndex {
-		appConfig := register.AppList[name]
-		if appConfig.Queue != nil {
-			appConfig.Queue(core.QueueMux)
-		}
-	}
-
-	// 调度注册
-	for _, name := range register.AppIndex {
-		appConfig := register.AppList[name]
-		if appConfig.Scheduler != nil {
-			appConfig.Scheduler(core.Scheduler)
-		}
-	}
 	//启动队列与调度服务
 	go func() {
 		task.StartScheduler()
@@ -404,7 +336,7 @@ func (t *Bootstrap) StartHttp() {
 	debug := core.Config["app"].GetBool("server.debug")
 
 	data, _ := json.MarshalIndent(t.App.Routes(), "", "  ")
-	ioutil.WriteFile("./routes.json", data, 0644)
+	_ = fsutil.WriteFile("./routes.json", data, 0644)
 
 	t.App.HideBanner = true
 

@@ -11,13 +11,13 @@ import (
 
 func Init() {
 
-	// 解析配置文件
 	pwd, _ := os.Getwd()
-	configFiles, err := filepath.Glob(filepath.Join(pwd, core.ConfigDir+"*.toml"))
+	configFiles, err := filepath.Glob(filepath.Join(pwd, core.ConfigDir+"*.yaml"))
 	if err != nil {
 		panic("configuration loading failure")
 	}
 
+	// 循环加载配置文件
 	for _, file := range configFiles {
 		filename := path.Base(file)
 		suffix := path.Ext(file)
@@ -25,7 +25,7 @@ func Init() {
 		core.Config[name] = LoadConfig(name)
 	}
 
-	// 调试配置
+	// 设置框架配置
 	core.Debug = core.Config["app"].GetBool("server.debug")
 	core.DebugMsg = core.Config["app"].GetString("server.debugMsg")
 

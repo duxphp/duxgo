@@ -25,8 +25,8 @@ type ServerStatus struct {
 	websocket bool // websocket服务
 }
 
-// New 创建服务管理
-func New() *Server {
+// NewServer 创建服务管理
+func NewServer() *Server {
 	return &Server{
 		ServerStatus: ServerStatus{
 			database:  true,

@@ -1,4 +1,4 @@
-package util
+package route
 
 import (
 	"github.com/labstack/echo/v4"
@@ -22,8 +22,8 @@ type RouterItem struct {
 	as     string
 }
 
-// NewRouter 新建资源路由
-func NewRouter(router *echo.Group) *RouterData {
+// New 新建资源路由
+func New(router *echo.Group) *RouterData {
 	return &RouterData{
 		router: router,
 	}
