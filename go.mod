@@ -1,4 +1,4 @@
-module github.com/duxphp/duxgo
+module github.com/duxphp/duxgo/v2
 
 go 1.18
 
