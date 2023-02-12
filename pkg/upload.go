@@ -1,10 +1,10 @@
 package pkg
 
 import (
-	"github.com/duxphp/duxgo/v2/core"
-	"github.com/duxphp/duxgo/v2/exception"
-	"github.com/duxphp/duxgo/v2/pkg/image"
-	"github.com/duxphp/duxgo/v2/pkg/upload"
+	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/exception"
+	"github.com/duxphp/duxgo/pkg/image"
+	"github.com/duxphp/duxgo/pkg/upload"
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cast"
 	"io/ioutil"

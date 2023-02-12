@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/duxphp/duxgo/v2/core"
+	"github.com/duxphp/duxgo/core"
 	"github.com/gookit/event"
 	"github.com/qiniu/qmgo"
 )

@@ -2,7 +2,7 @@ package validator
 
 import (
 	"errors"
-	"github.com/duxphp/duxgo/v2/core"
+	"github.com/duxphp/duxgo/core"
 	"github.com/go-playground/validator/v10"
 	"reflect"
 	"regexp"

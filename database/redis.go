@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/duxphp/duxgo/v2/core"
+	"github.com/duxphp/duxgo/core"
 	"github.com/go-redis/redis/v8"
 	"github.com/spf13/cast"
 )

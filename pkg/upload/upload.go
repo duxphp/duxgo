@@ -2,8 +2,8 @@ package upload
 
 import (
 	"bytes"
-	"github.com/duxphp/duxgo/v2/exception"
-	"github.com/duxphp/duxgo/v2/util/function"
+	"github.com/duxphp/duxgo/exception"
+	"github.com/duxphp/duxgo/util/function"
 	"github.com/h2non/filetype"
 	"github.com/taokunTeam/go-storage/kodo"
 	"github.com/taokunTeam/go-storage/local"

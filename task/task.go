@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/duxphp/duxgo/v2/core"
+	"github.com/duxphp/duxgo/core"
 	"github.com/gookit/color"
 	"github.com/hibiken/asynq"
 	"github.com/spf13/cast"

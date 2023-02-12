@@ -2,8 +2,8 @@ package util
 
 import (
 	"fmt"
-	"github.com/duxphp/duxgo/v2/core"
-	"github.com/duxphp/duxgo/v2/response"
+	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/response"
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"

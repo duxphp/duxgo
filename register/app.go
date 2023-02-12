@@ -1,7 +1,7 @@
 package register
 
 import (
-	util2 "github.com/duxphp/duxgo/v2/util"
+	util2 "github.com/duxphp/duxgo/util"
 	"github.com/hibiken/asynq"
 	"github.com/labstack/echo/v4"
 )
