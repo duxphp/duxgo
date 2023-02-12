@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/gookit/color"
 	"github.com/hibiken/asynq"
 	"github.com/spf13/cast"
@@ -13,7 +13,7 @@ import (
 )
 
 func Init() {
-	dbConfig := core.Config["database"].GetStringMapString("redis")
+	dbConfig := registry.Config["database"].GetStringMapString("redis")
 	res := asynq.RedisClientOpt{
 		Addr: dbConfig["host"] + ":" + dbConfig["port"],
 		// Omit if no password is required
@@ -39,9 +39,9 @@ func Init() {
 				retried, _ := asynq.GetRetryCount(ctx)
 				maxRetry, _ := asynq.GetMaxRetry(ctx)
 				if retried >= maxRetry {
-					core.Logger.Info().Err(err).Str("type", task.Type()).Bytes("payload", task.Payload()).Msg("task retry")
+					registry.Logger.Info().Err(err).Str("type", task.Type()).Bytes("payload", task.Payload()).Msg("task retry")
 				} else {
-					core.Logger.Info().Err(err).Str("type", task.Type()).Bytes("payload", task.Payload()).Msg("task error")
+					registry.Logger.Info().Err(err).Str("type", task.Type()).Bytes("payload", task.Payload()).Msg("task error")
 				}
 			}),
 		},
@@ -63,12 +63,12 @@ func Init() {
 	// 检查器
 	inspector := asynq.NewInspector(res)
 
-	core.QueueMux = mux
-	core.Queue = srv
-	core.QueueClient = client
-	core.QueueInspector = inspector
+	registry.QueueMux = mux
+	registry.Queue = srv
+	registry.QueueClient = client
+	registry.QueueInspector = inspector
 
-	core.QueueMux.HandleFunc("ping", func(ctx context.Context, t *asynq.Task) error {
+	registry.QueueMux.HandleFunc("ping", func(ctx context.Context, t *asynq.Task) error {
 		color.Print("⇨ queue ping status\n")
 		return nil
 	})
@@ -76,12 +76,12 @@ func Init() {
 	// 定时调度服务
 	scheduler := asynq.NewScheduler(res, &asynq.SchedulerOpts{
 		LogLevel: asynq.ErrorLevel,
-		Location: core.TimeLocation,
+		Location: registry.TimeLocation,
 		EnqueueErrorHandler: func(task *asynq.Task, opts []asynq.Option, err error) {
-			core.Logger.Error().Msgf("scheduler: ", err.Error())
+			registry.Logger.Error().Msgf("scheduler: ", err.Error())
 		},
 	})
-	core.Scheduler = scheduler
+	registry.Scheduler = scheduler
 
 }
 
@@ -95,15 +95,15 @@ const (
 
 // StartQueue 启动队列服务
 func StartQueue() {
-	if err := core.Queue.Run(core.QueueMux); err != nil {
-		core.Logger.Error().Msgf("Queue service cannot be started: %v", err)
+	if err := registry.Queue.Run(registry.QueueMux); err != nil {
+		registry.Logger.Error().Msgf("Queue service cannot be started: %v", err)
 	}
 }
 
 // StartScheduler 启动调度服务
 func StartScheduler() {
-	if err := core.Scheduler.Run(); err != nil {
-		core.Logger.Error().Msgf("Scheduler service cannot be started: %v", err)
+	if err := registry.Scheduler.Run(); err != nil {
+		registry.Logger.Error().Msgf("Scheduler service cannot be started: %v", err)
 	}
 }
 
@@ -142,16 +142,16 @@ func AddTask(typename string, params any, opts ...asynq.Option) *asynq.TaskInfo 
 	opts = append(opts, asynq.Timeout(1*time.Minute)) // 1分钟超时
 	opts = append(opts, asynq.Retention(2*time.Hour)) // 保留2小时
 
-	info, err := core.QueueClient.Enqueue(task, opts...)
+	info, err := registry.QueueClient.Enqueue(task, opts...)
 	if err != nil {
-		core.Logger.Error().Msg("Queue add error :" + err.Error())
+		registry.Logger.Error().Msg("Queue add error :" + err.Error())
 	}
 	return info
 }
 
 // DelTask 删除队列任务
 func DelTask(priority Priority, id string) error {
-	err := core.QueueInspector.DeleteTask(string(priority), id)
+	err := registry.QueueInspector.DeleteTask(string(priority), id)
 	if errors.Is(err, asynq.ErrQueueNotFound) {
 		return nil
 	}
@@ -177,7 +177,7 @@ func RegScheduler(cron string, typename string, params any, priority ...Priority
 		group = priority[0]
 	}
 	opts = append(opts, asynq.Queue(string(group)))
-	_, err := core.Scheduler.Register(cron, task, opts...)
+	_, err := registry.Scheduler.Register(cron, task, opts...)
 	if err != nil {
 		panic("Scheduler add error :" + err.Error())
 	}
@@ -187,25 +187,25 @@ type TaskLogger struct {
 }
 
 func (t *TaskLogger) Debug(args ...interface{}) {
-	core.Logger.Debug().Msg(fmt.Sprint(args...))
+	registry.Logger.Debug().Msg(fmt.Sprint(args...))
 }
 
 func (t *TaskLogger) Info(args ...interface{}) {
-	core.Logger.Info().Msg(fmt.Sprint(args...))
+	registry.Logger.Info().Msg(fmt.Sprint(args...))
 
 }
 
 func (t *TaskLogger) Warn(args ...interface{}) {
-	core.Logger.Warn().Msg(fmt.Sprint(args...))
+	registry.Logger.Warn().Msg(fmt.Sprint(args...))
 
 }
 
 func (t *TaskLogger) Error(args ...interface{}) {
-	core.Logger.Error().Interface("args", args).Msg("task")
+	registry.Logger.Error().Interface("args", args).Msg("task")
 
 }
 
 func (t *TaskLogger) Fatal(args ...interface{}) {
-	core.Logger.Fatal().Msg(fmt.Sprint(args...))
+	registry.Logger.Fatal().Msg(fmt.Sprint(args...))
 
 }

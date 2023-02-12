@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"errors"
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/exception"
+	"github.com/duxphp/duxgo/v2/exception"
+	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -13,7 +13,7 @@ import (
 
 // AuthJwt 授权中间件
 func AuthJwt(auth string) echo.MiddlewareFunc {
-	key := []byte(core.Config["app"].GetString("app.safeKey"))
+	key := []byte(registry.Config["app"].GetString("app.safeKey"))
 	return middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey:  key,
 		TokenLookup: "header:" + echo.HeaderAuthorization + ",query:auth",
@@ -56,9 +56,9 @@ func AuthJwt(auth string) echo.MiddlewareFunc {
 // NewJWT 新建授权结构
 func NewJWT() *JWT {
 	return &JWT{
-		SigningKey: []byte(core.Config["app"].GetString("app.safeKey")),
-		Expired:    core.Config["app"].GetDuration("jwt.expired"), // 过期时间
-		Renewal:    core.Config["app"].GetDuration("jwt.renewal"), // 续期时间
+		SigningKey: []byte(registry.Config["app"].GetString("app.safeKey")),
+		Expired:    registry.Config["app"].GetDuration("jwt.expired"), // 过期时间
+		Renewal:    registry.Config["app"].GetDuration("jwt.renewal"), // 续期时间
 	}
 }
 

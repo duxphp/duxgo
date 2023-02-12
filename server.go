@@ -2,11 +2,11 @@ package duxgo
 
 import (
 	"embed"
-	"github.com/duxphp/duxgo/bootstrap"
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/database"
-	"github.com/duxphp/duxgo/task"
-	"github.com/duxphp/duxgo/websocket"
+	"github.com/duxphp/duxgo/v2/bootstrap"
+	"github.com/duxphp/duxgo/v2/database"
+	"github.com/duxphp/duxgo/v2/registry"
+	"github.com/duxphp/duxgo/v2/task"
+	"github.com/duxphp/duxgo/v2/websocket"
 )
 
 // Server 服务管理
@@ -50,12 +50,12 @@ func (s *Server) RegisterService(calls ...func(*bootstrap.Bootstrap)) {
 
 // SetTablePrefix 设置数据表前缀
 func (s *Server) SetTablePrefix(prefix string) {
-	core.TablePrefix = prefix
+	registry.TablePrefix = prefix
 }
 
 // SetConfigDir 设置配置目录
 func (s *Server) SetConfigDir(dir string) {
-	core.ConfigDir = dir
+	registry.ConfigDir = dir
 }
 
 // SetDatabaseStatus 设置数据库状态
@@ -89,7 +89,7 @@ var tplFs embed.FS
 // Start 启动服务
 func (s *Server) Start() {
 	// 设置系统模板
-	core.TplFs = tplFs
+	registry.TplFs = tplFs
 
 	// 初始化启动服务
 	t := bootstrap.New()

@@ -5,18 +5,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/duxphp/duxgo/alarm"
-	"github.com/duxphp/duxgo/cache"
-	"github.com/duxphp/duxgo/config"
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/exception"
-	"github.com/duxphp/duxgo/logger"
-	"github.com/duxphp/duxgo/register"
-	"github.com/duxphp/duxgo/route"
-	"github.com/duxphp/duxgo/task"
-	"github.com/duxphp/duxgo/util"
-	"github.com/duxphp/duxgo/util/function"
-	"github.com/duxphp/duxgo/validator"
+	"github.com/duxphp/duxgo/v2/alarm"
+	"github.com/duxphp/duxgo/v2/app"
+	"github.com/duxphp/duxgo/v2/cache"
+	"github.com/duxphp/duxgo/v2/config"
+	"github.com/duxphp/duxgo/v2/exception"
+	"github.com/duxphp/duxgo/v2/logger"
+	"github.com/duxphp/duxgo/v2/registry"
+	"github.com/duxphp/duxgo/v2/route"
+	"github.com/duxphp/duxgo/v2/task"
+	"github.com/duxphp/duxgo/v2/util"
+	"github.com/duxphp/duxgo/v2/util/function"
+	"github.com/duxphp/duxgo/v2/validator"
 	"github.com/gookit/color"
 	"github.com/gookit/event"
 	"github.com/gookit/goutil/fsutil"
@@ -34,8 +34,6 @@ import (
 	"syscall"
 	"time"
 )
-
-const Version = "0.1.0"
 
 type RouterT map[string]*route.RouterData
 
@@ -65,9 +63,8 @@ func New() *Bootstrap {
 // RegisterCore 注册服务
 func (t *Bootstrap) RegisterCore() *Bootstrap {
 	// 设置时区
-	core.TimeLocation = time.FixedZone("CST", 8*3600)
-	core.Version = Version
-	time.Local = core.TimeLocation
+	registry.TimeLocation = time.FixedZone("CST", 8*3600)
+	time.Local = registry.TimeLocation
 
 	// 配置服务
 	config.Init()
@@ -94,11 +91,11 @@ func (t *Bootstrap) RegisterCore() *Bootstrap {
 			return template.JS(a)
 		},
 	}
-	tpl := template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(core.TplFs, "template/*"))
-	core.Tpl = tpl
+	tpl := template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(registry.TplFs, "template/*"))
+	registry.Tpl = tpl
 
 	// 注册目录
-	core.DirList = []string{"./uploads", "./logs", "./config", "./app", "./tmp", "./logs/default", "./logs/request", "./logs/service", "./logs/database"}
+	registry.DirList = []string{"./uploads", "./logs", "./config", "./app", "./tmp", "./logs/default", "./logs/request", "./logs/service", "./logs/database"}
 
 	return t
 }
@@ -116,11 +113,11 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	// web服务
 	t.App = echo.New()
-	core.App = t.App
+	registry.App = t.App
 
 	// 注册模板
 	render := &Template{
-		templates: core.Tpl,
+		templates: registry.Tpl,
 	}
 	t.App.Renderer = render
 
@@ -136,7 +133,7 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 		} else {
 			msg = err.Error()
 			body := function.CtxBody(c)
-			core.Logger.Error().Bytes("body", body).Err(err).Msg("error")
+			registry.Logger.Error().Bytes("body", body).Err(err).Msg("error")
 		}
 
 		// AJAX请求
@@ -146,21 +143,21 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 				"message": msg,
 			})
 			if err != nil {
-				core.Logger.Error().Err(err).Send()
+				registry.Logger.Error().Err(err).Send()
 			}
 			return
 		}
 		// WEB请求
 		if code == http.StatusNotFound {
-			err = core.Tpl.ExecuteTemplate(c.Response(), "404.gohtml", nil)
+			err = registry.Tpl.ExecuteTemplate(c.Response(), "404.gohtml", nil)
 		} else {
-			err = core.Tpl.ExecuteTemplate(c.Response(), "500.gohtml", map[string]any{
+			err = registry.Tpl.ExecuteTemplate(c.Response(), "500.gohtml", map[string]any{
 				"code":    code,
 				"message": msg,
 			})
 		}
 		if err != nil {
-			core.Logger.Error().Err(err).Send()
+			registry.Logger.Error().Err(err).Send()
 		}
 
 	}
@@ -191,7 +188,7 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	}
 
 	// 链接超时
-	timeout := core.Config["app"].GetInt("server.timeout")
+	timeout := registry.Config["app"].GetInt("server.timeout")
 	t.App.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Skipper: func(c echo.Context) bool {
 			if c.IsWebSocket() {
@@ -219,7 +216,7 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 
 	// 设置默认页面
 	t.App.GET("/", func(c echo.Context) error {
-		err := core.Tpl.ExecuteTemplate(c.Response(), "welcome.gohtml", nil)
+		err := registry.Tpl.ExecuteTemplate(c.Response(), "welcome.gohtml", nil)
 		if err != nil {
 			return err
 		}
@@ -230,15 +227,15 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 	t.App.Use(middleware.RequestID())
 
 	// 访问日志
-	if core.Config["app"].GetBool("logger.request.status") {
+	if registry.Config["app"].GetBool("logger.request.status") {
 		vLog := logger.New(
 			logger.GetWriter(
-				core.Config["app"].GetString("logger.request.level"),
-				core.Config["app"].GetString("logger.request.path")+"/web.log",
-				core.Config["app"].GetInt("logger.request.maxSize"),
-				core.Config["app"].GetInt("logger.request.maxBackups"),
-				core.Config["app"].GetInt("logger.request.maxAge"),
-				core.Config["app"].GetBool("logger.request.compress"),
+				registry.Config["app"].GetString("logger.request.level"),
+				registry.Config["app"].GetString("logger.request.path")+"/web.log",
+				registry.Config["app"].GetInt("logger.request.maxSize"),
+				registry.Config["app"].GetInt("logger.request.maxBackups"),
+				registry.Config["app"].GetInt("logger.request.maxAge"),
+				registry.Config["app"].GetBool("logger.request.compress"),
 				true,
 			),
 		).With().Timestamp().Logger()
@@ -276,26 +273,26 @@ func (t *Bootstrap) RegisterHttp() *Bootstrap {
 func (t *Bootstrap) RegisterApp() *Bootstrap {
 
 	// 初始化
-	for _, name := range register.AppIndex {
-		appConfig := register.AppList[name]
+	for _, name := range app.AppIndex {
+		appConfig := app.AppList[name]
 		if appConfig.Init != nil {
-			appConfig.Init(t)
+			appConfig.Init()
 		}
 	}
 
 	// 注册
-	for _, name := range register.AppIndex {
-		appConfig := register.AppList[name]
+	for _, name := range app.AppIndex {
+		appConfig := app.AppList[name]
 		if appConfig.Register != nil {
-			appConfig.Register(t)
+			appConfig.Register()
 		}
 	}
 
 	// 启动
-	for _, name := range register.AppIndex {
-		appConfig := register.AppList[name]
+	for _, name := range app.AppIndex {
+		appConfig := app.AppList[name]
 		if appConfig.Boot != nil {
-			appConfig.Boot(t)
+			appConfig.Boot()
 		}
 	}
 
@@ -315,8 +312,8 @@ func (t *Bootstrap) StartTask() *Bootstrap {
 
 // StopTask 停止任务服务
 func (t *Bootstrap) StopTask() {
-	core.Queue.Shutdown()
-	core.Scheduler.Shutdown()
+	registry.Queue.Shutdown()
+	registry.Scheduler.Shutdown()
 }
 
 // StartHttp 启动http服务
@@ -324,7 +321,7 @@ func (t *Bootstrap) StopTask() {
 func (t *Bootstrap) StartHttp() {
 
 	// 自动创建目录
-	for _, path := range core.DirList {
+	for _, path := range registry.DirList {
 		if !function.IsExist(path) {
 			if !function.CreateDir(path) {
 				panic("failed to create " + path + " directory")
@@ -332,8 +329,8 @@ func (t *Bootstrap) StartHttp() {
 		}
 	}
 
-	port := core.Config["app"].GetString("server.port")
-	debug := core.Config["app"].GetBool("server.debug")
+	port := registry.Config["app"].GetString("server.port")
+	debug := registry.Config["app"].GetBool("server.debug")
 
 	data, _ := json.MarshalIndent(t.App.Routes(), "", "  ")
 	_ = fsutil.WriteFile("./routes.json", data, 0644)
@@ -344,7 +341,7 @@ func (t *Bootstrap) StartHttp() {
 	banner += `   _____           ____ ____` + "\n"
 	banner += `  / __  \__ ______/ ___/ __ \` + "\n"
 	banner += ` / /_/ / /_/ /> </ (_ / /_/ /` + "\n"
-	banner += `/_____/\_,__/_/\_\___/\____/  v` + Version + "\n"
+	banner += `/_____/\_,__/_/\_\___/\____/  v` + registry.Version + "\n"
 
 	type item struct {
 		Name  string
@@ -377,7 +374,7 @@ func (t *Bootstrap) StartHttp() {
 	color.Print(banner)
 
 	// 记录启动时间
-	core.BootTime = time.Now()
+	registry.BootTime = time.Now()
 
 	// 启动http服务
 	go func() {
@@ -388,7 +385,7 @@ func (t *Bootstrap) StartHttp() {
 			return
 		}
 		if err != nil {
-			core.Logger.Error().Err(err).Msg("web")
+			registry.Logger.Error().Err(err).Msg("web")
 		}
 	}()
 }
@@ -397,13 +394,13 @@ func (t *Bootstrap) StartHttp() {
 func (t *Bootstrap) StopHttp() {
 	err, _ := event.Fire("App.close", event.M{})
 	if err != nil {
-		core.Logger.Error().Err(err).Msg("event stop")
+		registry.Logger.Error().Err(err).Msg("event stop")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := t.App.Shutdown(ctx); err != nil {
-		core.Logger.Error().Err(err).Msg("web")
+		registry.Logger.Error().Err(err).Msg("web")
 	}
 }
 

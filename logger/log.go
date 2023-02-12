@@ -2,8 +2,8 @@ package logger
 
 import (
 	"fmt"
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/util/function"
+	"github.com/duxphp/duxgo/v2/registry"
+	"github.com/duxphp/duxgo/v2/util/function"
 	"github.com/rs/zerolog"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
@@ -21,7 +21,7 @@ type loggerConfig struct {
 
 // Init 初始化日志
 func Init() {
-	path := core.Config["app"].GetString("logger.default.path")
+	path := registry.Config["app"].GetString("logger.default.path")
 	if !function.IsExist(path) {
 		if !function.CreateDir(path) {
 			panic("failed to create log directory")
@@ -31,10 +31,10 @@ func Init() {
 	// 默认日志配置
 	config := loggerConfig{
 		Path:       path,
-		MaxSize:    core.Config["app"].GetInt("logger.default.maxSize"),
-		MaxBackups: core.Config["app"].GetInt("logger.default.maxBackups"),
-		MaxAge:     core.Config["app"].GetInt("logger.default.maxAge"),
-		Compress:   core.Config["app"].GetBool("logger.default.compress"),
+		MaxSize:    registry.Config["app"].GetInt("logger.default.maxSize"),
+		MaxBackups: registry.Config["app"].GetInt("logger.default.maxBackups"),
+		MaxAge:     registry.Config["app"].GetInt("logger.default.maxAge"),
+		Compress:   registry.Config["app"].GetBool("logger.default.compress"),
 	}
 
 	// 初始化默认日志，根据日志等级分别输出
@@ -52,7 +52,7 @@ func Init() {
 		))
 	}
 
-	core.Logger = New(writerList...).With().Timestamp().Caller().Logger()
+	registry.Logger = New(writerList...).With().Timestamp().Caller().Logger()
 }
 
 // New 新建日志

@@ -1,4 +1,4 @@
-package core
+package registry
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 
 var (
 	// Version 版本号
-	Version string
+	Version = "v2.0.0"
 	// BootTime 启动时间
 	BootTime time.Time
 	// TablePrefix 表前缀

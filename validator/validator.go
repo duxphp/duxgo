@@ -2,15 +2,15 @@ package validator
 
 import (
 	"errors"
-	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/go-playground/validator/v10"
 	"reflect"
 	"regexp"
 )
 
 func Init() {
-	core.Validator = validator.New()
-	err := core.Validator.RegisterValidation("cnPhone", func(f validator.FieldLevel) bool {
+	registry.Validator = validator.New()
+	err := registry.Validator.RegisterValidation("cnPhone", func(f validator.FieldLevel) bool {
 		value := f.Field().String()
 		result, _ := regexp.MatchString(`^(1\d{10})$`, value)
 		return result

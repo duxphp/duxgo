@@ -2,6 +2,8 @@ package duxgo
 
 import (
 	"fmt"
+	"github.com/duxphp/duxgo/v2/registry"
+	"github.com/gookit/color"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -13,20 +15,57 @@ func New() *Dux {
 	return &Dux{}
 }
 
-func (t Dux) run() {
+func (t Dux) Run() {
 
-	var cmd = &cobra.Command{
-		Use:   "hugo",
-		Short: "Hugo is a very fast static site generator",
-		Long: `A Fast and Flexible Static Site Generator built with
-                love by spf13 and friends in Go.
-                Complete documentation is available at http://hugo.spf13.com`,
+	var rootCmd = &cobra.Command{Use: "dux"}
+
+	var subCmd = &cobra.Command{
+		Use:   "sub [no options!]",
+		Short: "My subcommand",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Inside subCmd PreRun with args: %v\n", args)
+		},
 		Run: func(cmd *cobra.Command, args []string) {
-			// Do Stuff Here
+			fmt.Printf("Inside subCmd Run with args: %v\n", args)
+		},
+		PostRun: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Inside subCmd PostRun with args: %v\n", args)
+		},
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Inside subCmd PersistentPostRun with args: %v\n", args)
+		},
+	}
+	rootCmd.AddCommand(subCmd)
+
+	var webCmd = &cobra.Command{
+		Use:   "web",
+		Short: "starting the web service",
+		Run: func(cmd *cobra.Command, args []string) {
+			color.Println(fmt.Sprintf("⇨ <red>%s</>", registry.Version))
+		},
+	}
+	rootCmd.AddCommand(webCmd)
+
+	var queueCmd = &cobra.Command{
+		Use:   "queue",
+		Short: "start queue service",
+		Run: func(cmd *cobra.Command, args []string) {
+			color.Println(fmt.Sprintf("⇨ <red>%s</>", registry.Version))
+		},
+	}
+	rootCmd.AddCommand(queueCmd)
+
+	var versionCmd = &cobra.Command{
+		Use:   "version",
+		Short: "View the version number",
+		Run: func(cmd *cobra.Command, args []string) {
+			color.Println(fmt.Sprintf("⇨ <red>%s</>", registry.Version))
 		},
 	}
 
-	if err := cmd.Execute(); err != nil {
+	rootCmd.AddCommand(versionCmd)
+
+	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

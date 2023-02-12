@@ -1,10 +1,10 @@
 package pkg
 
 import (
-	"github.com/duxphp/duxgo/core"
-	"github.com/duxphp/duxgo/exception"
-	"github.com/duxphp/duxgo/pkg/image"
-	"github.com/duxphp/duxgo/pkg/upload"
+	"github.com/duxphp/duxgo/v2/exception"
+	"github.com/duxphp/duxgo/v2/pkg/image"
+	"github.com/duxphp/duxgo/v2/pkg/upload"
+	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cast"
 	"io/ioutil"
@@ -51,7 +51,7 @@ func (s *Upload) Upload(file any, name string) (*upload.File, error) {
 		return nil, exception.BusinessError("不支持的上传文件")
 	}
 
-	maxSize := core.Config["storage"].GetInt("driver.maxSize")
+	maxSize := registry.Config["storage"].GetInt("driver.maxSize")
 
 	size := len(fileByte) / 1024
 	if size > maxSize {
@@ -59,8 +59,8 @@ func (s *Upload) Upload(file any, name string) (*upload.File, error) {
 	}
 
 	// 处理图片
-	imgResize := core.Config["storage"].GetStringMap("imageResize")
-	imgWater := core.Config["storage"].GetStringMap("imageWater")
+	imgResize := registry.Config["storage"].GetStringMap("imageResize")
+	imgWater := registry.Config["storage"].GetStringMap("imageWater")
 
 	if cast.ToBool(imgResize["status"]) || cast.ToBool(imgWater["status"]) {
 		img, err := image.New(fileByte)
@@ -86,8 +86,8 @@ func (s *Upload) Upload(file any, name string) (*upload.File, error) {
 			}
 		}
 	}
-	var Type = core.Config["storage"].GetString("driver.type")
-	core.Logger.Debug().Interface("type", Type).Msg("upload test")
+	var Type = registry.Config["storage"].GetString("driver.type")
+	registry.Logger.Debug().Interface("type", Type).Msg("upload test")
 	up, err := upload.New(Type, s.getConfig())
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func (s *Upload) Upload(file any, name string) (*upload.File, error) {
 // Remove 删除文件
 func (s *Upload) Remove(path string, driver ...string) error {
 	var err error
-	var Type = core.Config["storage"].GetString("driver.type")
+	var Type = registry.Config["storage"].GetString("driver.type")
 	if len(driver) > 0 {
 		Type = driver[0]
 	}
@@ -120,20 +120,20 @@ func (s *Upload) Remove(path string, driver ...string) error {
 
 func (s *Upload) getConfig() any {
 	var driverConfig any
-	var Type = core.Config["storage"].GetString("driver.type")
+	var Type = registry.Config["storage"].GetString("driver.type")
 	switch Type {
 	case "qiniu":
 		var qiniuConfig upload.ConfigQiniu
-		core.Config["storage"].UnmarshalKey("driver.qiniu", &qiniuConfig)
+		registry.Config["storage"].UnmarshalKey("driver.qiniu", &qiniuConfig)
 		driverConfig = qiniuConfig
 	case "oss":
 		var ossConfig upload.ConfigOss
-		core.Config["storage"].UnmarshalKey("driver.oss", &ossConfig)
+		registry.Config["storage"].UnmarshalKey("driver.oss", &ossConfig)
 		driverConfig = ossConfig
 	case "local":
 		var localConfig upload.ConfigLocal
-		core.Config["storage"].UnmarshalKey("driver.local", &localConfig)
-		localConfig.UrlPath = core.Config["app"].GetString("app.baseurl")
+		registry.Config["storage"].UnmarshalKey("driver.local", &localConfig)
+		localConfig.UrlPath = registry.Config["app"].GetString("app.baseurl")
 		driverConfig = localConfig
 	}
 

@@ -2,7 +2,7 @@ package exception
 
 import (
 	"fmt"
-	"github.com/duxphp/duxgo/core"
+	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
 )
@@ -28,13 +28,13 @@ func Error(err any, params ...any) *CoreError {
 	errs := &CoreError{
 		Message: msg,
 	}
-	core.Logger.Error().CallerSkipFrame(2).Interface("err", errs).Msg("core")
+	registry.Logger.Error().CallerSkipFrame(2).Interface("err", errs).Msg("core")
 	return errs
 }
 
 // Internal 内部错误
 func Internal(err any, params ...any) *CoreError {
 	errs := Error(err, params)
-	errs.Message = lo.Ternary[string](core.DebugMsg == "", "business is busy, please try again", core.DebugMsg)
+	errs.Message = lo.Ternary[string](registry.DebugMsg == "", "business is busy, please try again", registry.DebugMsg)
 	return errs
 }

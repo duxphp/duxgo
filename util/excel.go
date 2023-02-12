@@ -3,7 +3,7 @@ package util
 import (
 	"bytes"
 	"fmt"
-	"github.com/duxphp/duxgo/exception"
+	"github.com/duxphp/duxgo/v2/exception"
 	"github.com/go-resty/resty/v2"
 	"github.com/xuri/excelize/v2"
 	"time"

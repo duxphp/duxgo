@@ -3,7 +3,7 @@ package image
 import (
 	"bytes"
 	"github.com/disintegration/imaging"
-	"github.com/duxphp/duxgo/util/function"
+	"github.com/duxphp/duxgo/v2/util/function"
 	"github.com/h2non/filetype"
 	"github.com/samber/lo"
 	"image"

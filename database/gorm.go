@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/duxphp/duxgo/core"
-	coreLogger "github.com/duxphp/duxgo/logger"
+	coreLogger "github.com/duxphp/duxgo/v2/logger"
+	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/rs/zerolog"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -17,7 +17,7 @@ import (
 )
 
 func GormInit() {
-	dbConfig := core.Config["database"].GetStringMapString("db")
+	dbConfig := registry.Config["database"].GetStringMapString("db")
 
 	var connect gorm.Dialector
 	if dbConfig["type"] == "mysql" {
@@ -37,7 +37,7 @@ func GormInit() {
 	}
 	database, err := gorm.Open(connect, &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
-			TablePrefix:   core.TablePrefix,
+			TablePrefix:   registry.TablePrefix,
 			SingularTable: true,
 		},
 		Logger: GormLogger(),
@@ -45,13 +45,13 @@ func GormInit() {
 	if err != nil {
 		panic("database error: " + err.Error())
 	}
-	core.Db = database
-	sqlDB, err := core.Db.DB()
+	registry.Db = database
+	sqlDB, err := registry.Db.DB()
 	if err != nil {
 		panic("database error: " + err.Error())
 	}
-	sqlDB.SetMaxIdleConns(core.Config["app"].GetInt("database.maxIdleConns"))
-	sqlDB.SetMaxOpenConns(core.Config["app"].GetInt("database.maxOpenConns"))
+	sqlDB.SetMaxIdleConns(registry.Config["app"].GetInt("database.maxIdleConns"))
+	sqlDB.SetMaxOpenConns(registry.Config["app"].GetInt("database.maxOpenConns"))
 
 }
 
@@ -66,12 +66,12 @@ type logger struct {
 func GormLogger() *logger {
 	vLog := coreLogger.New(
 		coreLogger.GetWriter(
-			core.Config["app"].GetString("logger.db.level"),
-			core.Config["app"].GetString("logger.db.path")+"/gorm.log",
-			core.Config["app"].GetInt("logger.db.maxSize"),
-			core.Config["app"].GetInt("logger.db.maxBackups"),
-			core.Config["app"].GetInt("logger.db.maxAge"),
-			core.Config["app"].GetBool("logger.db.compress"),
+			registry.Config["app"].GetString("logger.db.level"),
+			registry.Config["app"].GetString("logger.db.path")+"/gorm.log",
+			registry.Config["app"].GetInt("logger.db.maxSize"),
+			registry.Config["app"].GetInt("logger.db.maxBackups"),
+			registry.Config["app"].GetInt("logger.db.maxAge"),
+			registry.Config["app"].GetBool("logger.db.compress"),
 			true,
 		)).With().Caller().CallerWithSkipFrameCount(5).Timestamp().Logger()
 
