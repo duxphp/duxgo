@@ -11,7 +11,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
 	"golang.org/x/crypto/bcrypt"
-	"io/ioutil"
+	"io"
 	"math"
 	"math/rand"
 	"net/url"
@@ -263,23 +263,21 @@ func InTimeSpan(start, end, check time.Time, includeStart, includeEnd bool) bool
 
 // CtxBody 提取body
 func CtxBody(ctx echo.Context) []byte {
-	s, err := ioutil.ReadAll(ctx.Request().Body)
-	ctx.Request().Body.Close()
-	ctx.Request().Body = ioutil.NopCloser(bytes.NewReader(s))
+	s, err := io.ReadAll(ctx.Request().Body)
+	_ = ctx.Request().Body.Close()
+	ctx.Request().Body = io.NopCloser(bytes.NewReader(s))
 	if err != nil {
 		return []byte("")
 	}
 	return s
 }
 
-// IsAjax 是否ajax请求
-func IsAjax(ctx echo.Context) bool {
-	xr := ctx.Request().Header.Get("X-Requested-With")
-	if xr != "" && strings.Index(xr, "XMLHttpRequest") != -1 {
+// IsJson 是否json请求
+func IsJson(ctx echo.Context) bool {
+	if ctx.Request().Header.Get("X-Requested-With") == "XMLHttpRequest" {
 		return true
 	}
-	accept := ctx.Request().Header.Get("Accept")
-	if strings.Index(accept, "/json") != -1 || strings.Index(accept, "/+json") != -1 {
+	if strings.Contains(ctx.Request().Header.Get("Accept"), "application/json") {
 		return true
 	}
 	return false

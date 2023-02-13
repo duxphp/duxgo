@@ -30,7 +30,7 @@ func Init() {
 	Socket.Start()
 }
 
-func ReleaseSocket() {
+func Release() {
 	Socket.Pool.Release()
 }
 

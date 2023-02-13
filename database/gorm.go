@@ -16,6 +16,9 @@ import (
 	"time"
 )
 
+// MigrateModel 合并模型
+var MigrateModel = []any{}
+
 func GormInit() {
 	dbConfig := registry.Config["database"].GetStringMapString("db")
 
@@ -114,7 +117,6 @@ func (l *logger) Error(ctx context.Context, s string, args ...interface{}) {
 }
 
 func (l *logger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
-
 	if l.LogLevel <= 0 {
 		return
 	}
@@ -132,5 +134,9 @@ func (l *logger) Trace(ctx context.Context, begin time.Time, fc func() (string, 
 	case l.LogLevel >= gormLogger.Info:
 		l.Logger.Debug().Fields(fields).Msgf("[GORM] query")
 	}
+}
 
+// GormMigrate 迁移模型
+func GormMigrate(dst ...any) {
+	MigrateModel = append(MigrateModel, dst...)
 }

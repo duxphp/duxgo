@@ -35,7 +35,7 @@ func Init() {
 func LoadConfig(name string) *viper.Viper {
 	config := viper.New()
 	config.SetConfigName(name)
-	config.SetConfigType("toml")
+	config.SetConfigType("yaml")
 	config.AddConfigPath(registry.ConfigDir)
 	if err := config.ReadInConfig(); err != nil {
 		fmt.Println("config", name)

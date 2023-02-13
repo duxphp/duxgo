@@ -1,72 +1,104 @@
 package duxgo
 
 import (
-	"fmt"
+	"embed"
+	"github.com/duxphp/duxgo/v2/app"
+	"github.com/duxphp/duxgo/v2/database"
 	"github.com/duxphp/duxgo/v2/registry"
-	"github.com/gookit/color"
+	"github.com/duxphp/duxgo/v2/service"
+	"github.com/duxphp/duxgo/v2/task"
+	"github.com/duxphp/duxgo/v2/web"
+	"github.com/panjf2000/ants/v2"
 	"github.com/spf13/cobra"
 	"os"
+	"time"
 )
 
 type Dux struct {
+	registerApp []func()
+	registerCmd []func(command *cobra.Command)
 }
 
 func New() *Dux {
 	return &Dux{}
 }
 
-func (t Dux) Run() {
+// RegisterApp 注册应用
+func (t *Dux) RegisterApp(calls ...func()) {
+	t.registerApp = append(t.registerApp, calls...)
+}
 
+// RegisterCmd 注册命令
+func (t *Dux) RegisterCmd(calls ...func(command *cobra.Command)) {
+	t.registerCmd = append(t.registerCmd, calls...)
+}
+
+// RegisterDir 注册目录
+func (t *Dux) RegisterDir(dirs ...string) {
+	app.DirList = append(app.DirList, dirs...)
+}
+
+//go:embed template/*
+var tplFs embed.FS
+
+// 创建通用服务
+func (t *Dux) create() {
+
+	// 设置时区
+	registry.TimeLocation = time.FixedZone("CST", 8*3600)
+	time.Local = registry.TimeLocation
+	registry.TplFs = tplFs
+
+	// 注册应用
+	for _, call := range t.registerApp {
+		call()
+	}
+
+	// 注册命令
+	t.RegisterCmd(app.Command, web.Command, task.Command, database.Command)
+}
+
+// Run 运行命令
+func (t *Dux) Run() {
+	// 构架功能
+	t.create()
+
+	// 注册命令
 	var rootCmd = &cobra.Command{Use: "dux"}
-
-	var subCmd = &cobra.Command{
-		Use:   "sub [no options!]",
-		Short: "My subcommand",
-		PreRun: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Inside subCmd PreRun with args: %v\n", args)
-		},
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Inside subCmd Run with args: %v\n", args)
-		},
-		PostRun: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Inside subCmd PostRun with args: %v\n", args)
-		},
-		PersistentPostRun: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("Inside subCmd PersistentPostRun with args: %v\n", args)
-		},
+	for _, cmd := range t.registerCmd {
+		cmd(rootCmd)
 	}
-	rootCmd.AddCommand(subCmd)
-
-	var webCmd = &cobra.Command{
-		Use:   "web",
-		Short: "starting the web service",
-		Run: func(cmd *cobra.Command, args []string) {
-			color.Println(fmt.Sprintf("⇨ <red>%s</>", registry.Version))
-		},
-	}
-	rootCmd.AddCommand(webCmd)
-
-	var queueCmd = &cobra.Command{
-		Use:   "queue",
-		Short: "start queue service",
-		Run: func(cmd *cobra.Command, args []string) {
-			color.Println(fmt.Sprintf("⇨ <red>%s</>", registry.Version))
-		},
-	}
-	rootCmd.AddCommand(queueCmd)
-
-	var versionCmd = &cobra.Command{
-		Use:   "version",
-		Short: "View the version number",
-		Run: func(cmd *cobra.Command, args []string) {
-			color.Println(fmt.Sprintf("⇨ <red>%s</>", registry.Version))
-		},
-	}
-
-	rootCmd.AddCommand(versionCmd)
-
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+// SetTablePrefix 设置数据表前缀
+func (t *Dux) SetTablePrefix(prefix string) {
+	registry.TablePrefix = prefix
+}
+
+// SetConfigDir 设置配置目录
+func (t *Dux) SetConfigDir(dir string) {
+	registry.ConfigDir = dir
+}
+
+// SetDatabaseStatus 设置数据库状态
+func (t *Dux) SetDatabaseStatus(status bool) {
+	service.Server.Database = status
+}
+
+// SetRedisStatus 设置redis状态
+func (t *Dux) SetRedisStatus(status bool) {
+	service.Server.Redis = status
+}
+
+// SetMongodbStatus 设置mongodb状态
+func (t *Dux) SetMongodbStatus(status bool) {
+	service.Server.Mongodb = status
+}
+
+// 释放服务
+func (t *Dux) release() {
+	ants.Release()
 }
