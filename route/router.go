@@ -6,7 +6,7 @@ import (
 
 // RouterData 路由结构
 type RouterData struct {
-	name       string
+	title      string
 	prefix     string
 	permission bool
 	data       []*RouterItem
@@ -16,10 +16,10 @@ type RouterData struct {
 
 // RouterItem 路由结构
 type RouterItem struct {
-	name   string
+	title  string
 	method string
 	path   string
-	as     string
+	name   string
 }
 
 // New 新建资源路由
@@ -30,9 +30,9 @@ func New(router *echo.Group) *RouterData {
 }
 
 // Group 路由分组
-func (t *RouterData) Group(prefix string, name string, middle ...echo.MiddlewareFunc) *RouterData {
+func (t *RouterData) Group(prefix string, title string, middle ...echo.MiddlewareFunc) *RouterData {
 	group := &RouterData{
-		name:   name,
+		title:  title,
 		prefix: prefix,
 		router: t.router.Group(prefix, middle...),
 	}
@@ -52,64 +52,61 @@ func (t *RouterData) Router() *echo.Group {
 }
 
 // Get 路由
-func (t *RouterData) Get(path string, handler echo.HandlerFunc, name string, as ...string) *echo.Route {
-	return t.Add(echo.GET, path, handler, name, as...)
+func (t *RouterData) Get(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
+	return t.Add(echo.GET, path, handler, title, name)
 }
 
 // Head 路由
-func (t *RouterData) Head(path string, handler echo.HandlerFunc, name string, as ...string) *echo.Route {
-	return t.Add(echo.HEAD, path, handler, name, as...)
+func (t *RouterData) Head(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
+	return t.Add(echo.HEAD, path, handler, title, name)
 }
 
 // Post 路由
-func (t *RouterData) Post(path string, handler echo.HandlerFunc, name string, as ...string) *echo.Route {
-	return t.Add(echo.POST, path, handler, name, as...)
+func (t *RouterData) Post(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
+	return t.Add(echo.POST, path, handler, title, name)
 }
 
 // Put 路由
-func (t *RouterData) Put(path string, handler echo.HandlerFunc, name string, as ...string) *echo.Route {
-	return t.Add(echo.PUT, path, handler, name, as...)
+func (t *RouterData) Put(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
+	return t.Add(echo.PUT, path, handler, title, name)
 }
 
 // Delete 路由
-func (t *RouterData) Delete(path string, handler echo.HandlerFunc, name string, as ...string) *echo.Route {
-	return t.Add(echo.DELETE, path, handler, name, as...)
+func (t *RouterData) Delete(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
+	return t.Add(echo.DELETE, path, handler, title, name)
 }
 
 // Connect 路由
-func (t *RouterData) Connect(path string, handler echo.HandlerFunc, name string, as ...string) *echo.Route {
-	return t.Add(echo.CONNECT, path, handler, name, as...)
+func (t *RouterData) Connect(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
+	return t.Add(echo.CONNECT, path, handler, title, name)
 }
 
 // Options 路由
-func (t *RouterData) Options(path string, handler echo.HandlerFunc, name string, as ...string) *echo.Route {
-	return t.Add(echo.OPTIONS, path, handler, name, as...)
+func (t *RouterData) Options(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
+	return t.Add(echo.OPTIONS, path, handler, title, name)
 }
 
 // Trace 路由
-func (t *RouterData) Trace(path string, handler echo.HandlerFunc, name string, as ...string) *echo.Route {
-	return t.Add(echo.TRACE, path, handler, name, as...)
+func (t *RouterData) Trace(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
+	return t.Add(echo.TRACE, path, handler, title, name)
 }
 
 // Patch 路由
-func (t *RouterData) Patch(path string, handler echo.HandlerFunc, name string, as ...string) *echo.Route {
-	return t.Add(echo.PATCH, path, handler, name, as...)
+func (t *RouterData) Patch(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
+	return t.Add(echo.PATCH, path, handler, title, name)
 }
 
 // Add 添加路由资源
-func (t *RouterData) Add(method string, path string, handler echo.HandlerFunc, name string, as ...string) *echo.Route {
+func (t *RouterData) Add(method string, path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
 	item := RouterItem{
-		name:   name,
+		title:  title,
 		method: method,
 		path:   path,
-		as:     "",
-	}
-	if len(as) > 0 {
-		item.as = as[0]
+		name:   name,
 	}
 	t.data = append(t.data, &item)
 	r := t.router.Add(method, path, handler)
-	r.Name = item.as
+	r.Name = item.name
 	return r
 }
 
@@ -118,24 +115,23 @@ func (t *RouterData) ParseTree(prefix string) any {
 	var all []any
 	for _, datum := range t.data {
 		all = append(all, map[string]any{
-			"name":       datum.name,
-			"method":     datum.method,
-			"path":       prefix + datum.path,
-			"permission": t.permission,
+			"title":  datum.title,
+			"name":   datum.name,
+			"method": datum.method,
+			"path":   prefix + datum.path,
 		})
 	}
 	for _, item := range t.group {
 		gpath := prefix + item.prefix
 		all = append(all, item.ParseTree(gpath))
 	}
-	if t.name == "" {
+	if t.title == "" {
 		return all
 	}
 	return map[string]any{
-		"name":       t.name,
-		"permission": t.permission,
-		"path":       prefix,
-		"data":       all,
+		"title": t.title,
+		"path":  prefix,
+		"data":  all,
 	}
 }
 
@@ -144,10 +140,10 @@ func (t *RouterData) ParseData(prefix string) []map[string]any {
 	var all []map[string]any
 	for _, datum := range t.data {
 		all = append(all, map[string]any{
-			"name":       datum.name,
-			"method":     datum.method,
-			"path":       prefix + datum.path,
-			"permission": t.permission,
+			"title":  datum.title,
+			"name":   datum.name,
+			"method": datum.method,
+			"path":   prefix + datum.path,
 		})
 	}
 	for _, item := range t.group {

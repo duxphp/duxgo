@@ -1,4 +1,4 @@
-package menu
+package permission
 
 import (
 	"github.com/samber/lo"
@@ -38,7 +38,7 @@ func (t *PermissionData) Add(label string, name string) {
 	t.Data = append(t.Data, data)
 }
 
-// Get 获取权限
+// Get 获取二级权限
 func (t *PermissionData) Get() []map[string]any {
 	data := lo.Map[*PermissionData, map[string]any](t.Data, func(group *PermissionData, index int) map[string]any {
 		list := lo.Map[*PermissionData, map[string]any](group.Data, func(item *PermissionData, index int) map[string]any {
@@ -57,5 +57,16 @@ func (t *PermissionData) Get() []map[string]any {
 	sort.Slice(data, func(i, j int) bool {
 		return data[i]["order"].(int) < data[j]["order"].(int)
 	})
+	return data
+}
+
+// GetData 获取扁平权限
+func (t *PermissionData) GetData() []string {
+	data := []string{}
+	for _, datum := range t.Data {
+		for _, item := range datum.Data {
+			data = append(data, item.Label)
+		}
+	}
 	return data
 }

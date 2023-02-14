@@ -56,7 +56,7 @@ func (t *MenuData) Item(name string, url string, order int) {
 	t.Data = append(t.Data, data)
 }
 
-// Get 获取菜单
+// Get 获取三级菜单
 func (t *MenuData) Get() map[string]any {
 	// 重置菜单
 	var menu []map[string]any
