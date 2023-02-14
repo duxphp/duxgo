@@ -43,17 +43,14 @@ var tplFs embed.FS
 
 // 创建通用服务
 func (t *Dux) create() {
-
 	// 设置时区
 	registry.TimeLocation = time.FixedZone("CST", 8*3600)
 	time.Local = registry.TimeLocation
 	registry.TplFs = tplFs
-
 	// 注册应用
 	for _, call := range t.registerApp {
 		call()
 	}
-
 	// 注册命令
 	t.RegisterCmd(app.Command, web.Command, task.Command, database.Command)
 }

@@ -2,8 +2,11 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"net/url"
 	"os"
+	"strings"
 )
 
 type LocalStorage struct {
@@ -67,5 +70,11 @@ func (s *LocalStorage) delete(ctx context.Context, path string) error {
 }
 
 func (s *LocalStorage) publicUrl(ctx context.Context, path string) (string, error) {
+	srcUrl := fmt.Sprintf("%s/%s", strings.TrimRight(s.domain, "/"), path)
+	srcUri, _ := url.Parse(srcUrl)
+	return srcUri.String(), nil
+}
+
+func (s *LocalStorage) privateUrl(ctx context.Context, path string) (string, error) {
 	return s.domain + "/" + path, nil
 }

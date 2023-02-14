@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"io"
 	"net/http"
@@ -12,9 +13,10 @@ import (
 type CoStorage struct {
 	Client     *cos.Client
 	BucketName string
+	Domain     string
 }
 
-func NewCoStorage(secretId, secretKey, region, bucketName string) (*CoStorage, error) {
+func NewCoStorage(secretId, secretKey, region, bucketName, domain string) *CoStorage {
 	u, _ := url.Parse("https://" + bucketName + ".cos." + region + ".myqcloud.com")
 	b := &cos.BaseURL{BucketURL: u}
 	c := cos.NewClient(b, &http.Client{
@@ -26,7 +28,8 @@ func NewCoStorage(secretId, secretKey, region, bucketName string) (*CoStorage, e
 	return &CoStorage{
 		Client:     c,
 		BucketName: bucketName,
-	}, nil
+		Domain:     domain,
+	}
 }
 
 func (tfs *CoStorage) write(ctx context.Context, path string, contents string, config map[string]any) error {
@@ -71,6 +74,13 @@ func (tfs *CoStorage) delete(ctx context.Context, path string) error {
 }
 
 func (tfs *CoStorage) publicUrl(ctx context.Context, path string) (string, error) {
+	srcUrl := fmt.Sprintf("%s/%s", strings.TrimRight(tfs.Domain, "/"), path)
+	srcUri, _ := url.Parse(srcUrl)
+	finalUrl := srcUri.String()
+	return finalUrl, nil
+}
+
+func (tfs *CoStorage) privateUrl(ctx context.Context, path string) (string, error) {
 	u := tfs.Client.Object.GetObjectURL(path)
 	return u.String(), nil
 }

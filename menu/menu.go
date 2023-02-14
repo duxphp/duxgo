@@ -1,4 +1,4 @@
-package util
+package menu
 
 import (
 	"sort"
@@ -17,8 +17,8 @@ type MenuData struct {
 	PushData map[string]*MenuData
 }
 
-// NewMenu 新建菜单
-func NewMenu() *MenuData {
+// New 新建菜单
+func New() *MenuData {
 	return &MenuData{
 		PushData: map[string]*MenuData{},
 	}
@@ -56,8 +56,8 @@ func (t *MenuData) Item(name string, url string, order int) {
 	t.Data = append(t.Data, data)
 }
 
-// Render 渲染菜单
-func (t *MenuData) Render() map[string]any {
+// Get 获取菜单
+func (t *MenuData) Get() map[string]any {
 	// 重置菜单
 	var menu []map[string]any
 	for _, appData := range t.Data {

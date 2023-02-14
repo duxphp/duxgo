@@ -2,25 +2,29 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"io"
+	"net/url"
 	"strings"
 )
 
 type OssStorage struct {
 	Client     *oss.Client
+	Domain     string
 	BucketName string
 }
 
-func NewOssStorage(accessKeyId, accessKeySecret, endpoint, bucketName string) (*OssStorage, error) {
+func NewOssStorage(accessKeyId, accessKeySecret, endpoint, bucketName, domain string) *OssStorage {
 	client, err := oss.New(endpoint, accessKeyId, accessKeySecret)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 	return &OssStorage{
 		Client:     client,
+		Domain:     domain,
 		BucketName: bucketName,
-	}, nil
+	}
 }
 
 func (ofs *OssStorage) write(ctx context.Context, path string, contents string, config map[string]interface{}) error {
@@ -81,14 +85,20 @@ func (ofs *OssStorage) delete(ctx context.Context, path string) error {
 }
 
 func (ofs *OssStorage) publicUrl(ctx context.Context, path string) (string, error) {
+	srcUrl := fmt.Sprintf("%s/%s", strings.TrimRight(ofs.Domain, "/"), path)
+	srcUri, _ := url.Parse(srcUrl)
+	finalUrl := srcUri.String()
+	return finalUrl, nil
+}
+
+func (ofs *OssStorage) privateUrl(ctx context.Context, path string) (string, error) {
 	bucket, err := ofs.Client.Bucket(ofs.BucketName)
 	if err != nil {
 		return "", err
 	}
-	// 私有地址
-	url, err := bucket.SignURL(path, oss.HTTPGet, 3600)
+	finalUrl, err := bucket.SignURL(path, oss.HTTPGet, 3600)
 	if err != nil {
 		return "", err
 	}
-	return url, nil
+	return finalUrl, nil
 }

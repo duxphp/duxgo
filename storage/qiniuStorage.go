@@ -81,3 +81,7 @@ func (qfs *QiniuFileStorage) delete(ctx context.Context, path string) error {
 func (qfs *QiniuFileStorage) publicUrl(ctx context.Context, path string) (string, error) {
 	return storage.MakePublicURL(qfs.Domain, path), nil
 }
+
+func (qfs *QiniuFileStorage) privateUrl(ctx context.Context, path string) (string, error) {
+	return storage.MakePrivateURL(qfs.Mac, qfs.Domain, path, 3600), nil
+}
