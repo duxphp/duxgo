@@ -1,8 +1,8 @@
 package app
 
 import (
+	"github.com/duxphp/duxgo/v2/function"
 	"github.com/duxphp/duxgo/v2/registry"
-	"github.com/duxphp/duxgo/v2/util/function"
 )
 
 var DirList = []string{
