@@ -2,14 +2,20 @@ package logger
 
 import (
 	"fmt"
+	"github.com/duxphp/duxgo/v2/config"
 	"github.com/duxphp/duxgo/v2/function"
-	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/rs/zerolog"
+	"github.com/samber/do"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"os"
 	"time"
 )
+
+// Log 日志
+func Log() zerolog.Logger {
+	return do.MustInvoke[zerolog.Logger](nil)
+}
 
 type loggerConfig struct {
 	Path       string
@@ -21,7 +27,7 @@ type loggerConfig struct {
 
 // Init 初始化日志
 func Init() {
-	path := registry.Config["app"].GetString("logger.default.path")
+	path := config.Get("app").GetString("logger.default.path")
 	if !function.IsExist(path) {
 		if !function.CreateDir(path) {
 			panic("failed to create log directory")
@@ -29,30 +35,31 @@ func Init() {
 	}
 
 	// 默认日志配置
-	config := loggerConfig{
+	logConfig := loggerConfig{
 		Path:       path,
-		MaxSize:    registry.Config["app"].GetInt("logger.default.maxSize"),
-		MaxBackups: registry.Config["app"].GetInt("logger.default.maxBackups"),
-		MaxAge:     registry.Config["app"].GetInt("logger.default.maxAge"),
-		Compress:   registry.Config["app"].GetBool("logger.default.compress"),
+		MaxSize:    config.Get("app").GetInt("logger.default.maxSize"),
+		MaxBackups: config.Get("app").GetInt("logger.default.maxBackups"),
+		MaxAge:     config.Get("app").GetInt("logger.default.maxAge"),
+		Compress:   config.Get("app").GetBool("logger.default.compress"),
 	}
 
 	// 初始化默认日志，根据日志等级分别输出
-	writerList := []io.Writer{}
+	writerList := make([]io.Writer, 0)
 	levels := []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
 	for _, level := range levels {
 		writerList = append(writerList, GetWriter(
 			level,
-			fmt.Sprintf("%s/%s.log", config.Path, level),
-			config.MaxSize,
-			config.MaxBackups,
-			config.MaxAge,
-			config.Compress,
+			fmt.Sprintf("%s/%s.log", logConfig.Path, level),
+			logConfig.MaxSize,
+			logConfig.MaxBackups,
+			logConfig.MaxAge,
+			logConfig.Compress,
 			false,
 		))
 	}
 
-	registry.Logger = New(writerList...).With().Timestamp().Caller().Logger()
+	do.ProvideValue[zerolog.Logger](nil, New(writerList...).With().Timestamp().Caller().Logger())
+
 }
 
 // New 新建日志

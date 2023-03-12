@@ -10,8 +10,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/gofrs/uuid v4.4.0+incompatible
-	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/golang-module/carbon/v2 v2.1.9
+	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/gookit/color v1.5.2
 	github.com/gookit/event v1.0.6
 	github.com/gookit/goutil v0.6.4
@@ -19,7 +18,7 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/hibiken/asynq v0.24.0
 	github.com/jedib0t/go-pretty/v6 v6.4.4
-	github.com/jianfengye/collection v1.4.1
+	github.com/labstack/echo-jwt/v4 v4.1.0
 	github.com/labstack/echo/v4 v4.10.0
 	github.com/labstack/gommon v0.4.0
 	github.com/panjf2000/ants/v2 v2.7.1
@@ -30,7 +29,6 @@ require (
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
-	github.com/taokunTeam/go-storage v0.0.0-20220914093812-6b2bb9e238d4
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.41
 	github.com/xuri/excelize/v2 v2.6.0
 	golang.org/x/crypto v0.6.0
@@ -49,7 +47,7 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
-	github.com/golang-jwt/jwt/v4 v4.4.3 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
@@ -62,7 +60,6 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
-	github.com/labstack/echo-jwt/v4 v4.1.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -79,6 +76,7 @@ require (
 	github.com/richardlehane/msoleps v1.0.1 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
+	github.com/samber/do v1.6.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect

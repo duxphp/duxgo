@@ -3,6 +3,7 @@ package database
 import (
 	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/go-redis/redis/v8"
+	"github.com/samber/do"
 	"github.com/spf13/cast"
 )
 
@@ -17,6 +18,5 @@ func RedisInit() {
 	if err != nil {
 		panic(err.Error())
 	}
-
-	registry.Redis = client
+	do.ProvideValue[*redis.Client](nil, client)
 }

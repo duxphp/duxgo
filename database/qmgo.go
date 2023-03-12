@@ -4,6 +4,7 @@ import (
 	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/gookit/event"
 	"github.com/qiniu/qmgo"
+	"github.com/samber/do"
 )
 
 func QmgoInit() {
@@ -18,7 +19,8 @@ func QmgoInit() {
 	if err != nil {
 		panic("qmgo error :" + err.Error())
 	}
-	registry.Mgo = client.Database(dbConfig["dbname"])
+
+	do.ProvideValue[*qmgo.Database](nil, client.Database(dbConfig["dbname"]))
 
 	event.On("app.close", event.ListenerFunc(func(e event.Event) error {
 		return client.Close(registry.Ctx)

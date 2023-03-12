@@ -3,28 +3,25 @@ package registry
 import (
 	"context"
 	"embed"
-	"github.com/coocood/freecache"
 	"github.com/go-playground/validator/v10"
-	"github.com/go-redis/redis/v8"
-	"github.com/hibiken/asynq"
 	"github.com/labstack/echo/v4"
-	"github.com/qiniu/qmgo"
 	"github.com/rs/zerolog"
-	"github.com/spf13/viper"
-	"gorm.io/gorm"
+	"github.com/samber/do"
 	"html/template"
 	"time"
 )
 
 var (
+	// App echo应用
+	App *echo.Echo
 	// Version 版本号
 	Version = "v2.0.0"
 	// BootTime 启动时间
 	BootTime time.Time
+	// Di 依赖注入
+	Di *do.Injector
 	// TablePrefix 表前缀
 	TablePrefix = "app_"
-	// App echo
-	App *echo.Echo
 	// Debug 调试模式
 	Debug bool
 	// DebugMsg 屏蔽消息
@@ -38,32 +35,10 @@ var (
 	// TplFs 系统视图
 	TplFs embed.FS
 	// Tpl 系统模板视图
-	Tpl *template.Template
-	// Config 通用配置
-	Config    = map[string]*viper.Viper{}
+	Tpl       *template.Template
 	ConfigDir = "./config/"
 	// Logger 日志服务
 	Logger zerolog.Logger
-	// Alarm 消息通知
-	Alarm any
-	// Cache 公共缓存
-	Cache *freecache.Cache
-	// Db 数据库
-	Db *gorm.DB
-	// Mgo 数据库
-	Mgo *qmgo.Database
-	// Redis 数据
-	Redis *redis.Client
-	// Queue 队列服务端
-	Queue *asynq.Server
-	// QueueMux 队列调度复用
-	QueueMux *asynq.ServeMux
-	// QueueClient 队列客户端
-	QueueClient *asynq.Client
-	// QueueInspector 队列检查器
-	QueueInspector *asynq.Inspector
-	// Scheduler 调度服务端
-	Scheduler *asynq.Scheduler
 	// Validator 验证器
 	Validator *validator.Validate
 )

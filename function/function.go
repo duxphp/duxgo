@@ -5,9 +5,11 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"github.com/duxphp/duxgo/v2/config"
 	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/do"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
 	"golang.org/x/crypto/bcrypt"
@@ -102,7 +104,7 @@ func Url(urlString string, params map[string]any, absolutes ...bool) string {
 		absolute = absolutes[0]
 	}
 	if absolute {
-		urlBuild = registry.Config["app"].GetString("app.baseUrl") + urlBuild
+		urlBuild = do.MustInvoke[config.Config](nil)["app"].GetString("app.baseUrl") + urlBuild
 	}
 	return urlBuild
 }
@@ -148,7 +150,7 @@ func BuildUrl(urlString string, params map[string]any, absolute bool, expand ...
 	}
 	urlBuild := urlString + "?" + q.Encode()
 	if absolute {
-		urlBuild = registry.Config["app"].GetString("app.baseUrl") + urlBuild
+		urlBuild = do.MustInvoke[config.Config](nil)["app"].GetString("app.baseUrl") + urlBuild
 	}
 	for k, v := range paramsFix {
 		urlBuild = strings.Replace(urlBuild, "xx"+k+"xx", "${ "+v+" || ''}", -1)

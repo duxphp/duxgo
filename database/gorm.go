@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/duxphp/duxgo/v2/config"
 	coreLogger "github.com/duxphp/duxgo/v2/logger"
 	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/rs/zerolog"
+	"github.com/samber/do"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -17,10 +19,17 @@ import (
 )
 
 // MigrateModel 合并模型
-var MigrateModel = []any{}
+var MigrateModel = make([]any, 0)
 
+func Gorm() *gorm.DB {
+	return do.MustInvoke[*gorm.DB](nil)
+}
+
+// GormInit 初始化数据库
 func GormInit() {
-	dbConfig := registry.Config["database"].GetStringMapString("db")
+
+	// 注册数据库
+	dbConfig := config.Get("database").GetStringMapString("db")
 
 	var connect gorm.Dialector
 	if dbConfig["type"] == "mysql" {
@@ -48,17 +57,22 @@ func GormInit() {
 	if err != nil {
 		panic("database error: " + err.Error())
 	}
-	registry.Db = database
-	sqlDB, err := registry.Db.DB()
+
+	// 注册db服务
+	do.ProvideValue[*gorm.DB](nil, database)
+
+	// 设置连接池
+	sqlDB, err := do.MustInvoke[*gorm.DB](nil).DB()
 	if err != nil {
 		panic("database error: " + err.Error())
 	}
-	sqlDB.SetMaxIdleConns(registry.Config["app"].GetInt("database.maxIdleConns"))
-	sqlDB.SetMaxOpenConns(registry.Config["app"].GetInt("database.maxOpenConns"))
+	sqlDB.SetMaxIdleConns(config.Get("app").GetInt("database.maxIdleConns"))
+	sqlDB.SetMaxOpenConns(config.Get("app").GetInt("database.maxOpenConns"))
 
 }
 
-type logger struct {
+// Logger 数据库日志
+type Logger struct {
 	SlowThreshold             time.Duration
 	SourceField               string
 	IgnoreRecordNotFoundError bool
@@ -66,19 +80,19 @@ type logger struct {
 	LogLevel                  gormLogger.LogLevel
 }
 
-func GormLogger() *logger {
+func GormLogger() *Logger {
 	vLog := coreLogger.New(
 		coreLogger.GetWriter(
-			registry.Config["app"].GetString("logger.db.level"),
-			registry.Config["app"].GetString("logger.db.path")+"/gorm.log",
-			registry.Config["app"].GetInt("logger.db.maxSize"),
-			registry.Config["app"].GetInt("logger.db.maxBackups"),
-			registry.Config["app"].GetInt("logger.db.maxAge"),
-			registry.Config["app"].GetBool("logger.db.compress"),
+			config.Get("app").GetString("logger.db.level"),
+			config.Get("app").GetString("logger.db.path")+"/gorm.log",
+			config.Get("app").GetInt("logger.db.maxSize"),
+			config.Get("app").GetInt("logger.db.maxBackups"),
+			config.Get("app").GetInt("logger.db.maxAge"),
+			config.Get("app").GetBool("logger.db.compress"),
 			true,
 		)).With().Caller().CallerWithSkipFrameCount(5).Timestamp().Logger()
 
-	return &logger{
+	return &Logger{
 		SlowThreshold:             1 * time.Second,
 		Logger:                    vLog,
 		LogLevel:                  gormLogger.Silent,
@@ -86,8 +100,8 @@ func GormLogger() *logger {
 	}
 }
 
-func (l *logger) LogMode(level gormLogger.LogLevel) gormLogger.Interface {
-	return &logger{
+func (l *Logger) LogMode(level gormLogger.LogLevel) gormLogger.Interface {
+	return &Logger{
 		Logger:                    l.Logger,
 		SlowThreshold:             l.SlowThreshold,
 		LogLevel:                  level,
@@ -95,28 +109,28 @@ func (l *logger) LogMode(level gormLogger.LogLevel) gormLogger.Interface {
 	}
 }
 
-func (l *logger) Info(ctx context.Context, s string, args ...interface{}) {
+func (l *Logger) Info(ctx context.Context, s string, args ...interface{}) {
 	if l.LogLevel < gormLogger.Info {
 		return
 	}
 	l.Logger.Info().Msgf(s, args)
 }
 
-func (l *logger) Warn(ctx context.Context, s string, args ...interface{}) {
+func (l *Logger) Warn(ctx context.Context, s string, args ...interface{}) {
 	if l.LogLevel < gormLogger.Warn {
 		return
 	}
 	l.Logger.Warn().Msgf(s, args)
 }
 
-func (l *logger) Error(ctx context.Context, s string, args ...interface{}) {
+func (l *Logger) Error(ctx context.Context, s string, args ...interface{}) {
 	if l.LogLevel < gormLogger.Error {
 		return
 	}
 	l.Logger.Error().Msgf(s, args)
 }
 
-func (l *logger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
+func (l *Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	if l.LogLevel <= 0 {
 		return
 	}

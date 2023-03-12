@@ -8,10 +8,12 @@ import (
 	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/gookit/color"
 	"github.com/hibiken/asynq"
+	"github.com/samber/do"
 	"github.com/spf13/cast"
 	"time"
 )
 
+// Init 初始化任务处理
 func Init() {
 	dbConfig := registry.Config["database"].GetStringMapString("redis")
 	res := asynq.RedisClientOpt{
@@ -63,12 +65,16 @@ func Init() {
 	// 检查器
 	inspector := asynq.NewInspector(res)
 
-	registry.QueueMux = mux
-	registry.Queue = srv
-	registry.QueueClient = client
-	registry.QueueInspector = inspector
+	// 队列服务端
+	do.ProvideValue[*asynq.Server](nil, srv)
+	// 队列混合器
+	do.ProvideValue[*asynq.ServeMux](nil, mux)
+	// 队列客户端
+	do.ProvideValue[*asynq.Client](nil, client)
+	// 队列检查器
+	do.ProvideValue[*asynq.Inspector](nil, inspector)
 
-	registry.QueueMux.HandleFunc("ping", func(ctx context.Context, t *asynq.Task) error {
+	mux.HandleFunc("ping", func(ctx context.Context, t *asynq.Task) error {
 		color.Print("⇨ queue ping status\n")
 		return nil
 	})
@@ -77,12 +83,16 @@ func Init() {
 	scheduler := asynq.NewScheduler(res, &asynq.SchedulerOpts{
 		LogLevel: asynq.ErrorLevel,
 		Location: registry.TimeLocation,
-		EnqueueErrorHandler: func(task *asynq.Task, opts []asynq.Option, err error) {
+		PostEnqueueFunc: func(info *asynq.TaskInfo, err error) {
+			if err == nil {
+				return
+			}
 			registry.Logger.Error().Msgf("scheduler: ", err.Error())
 		},
 	})
-	registry.Scheduler = scheduler
 
+	// 定时调度器
+	do.ProvideValue[*asynq.Scheduler](nil, scheduler)
 }
 
 type Priority string
@@ -95,14 +105,14 @@ const (
 
 // StartQueue 启动队列服务
 func StartQueue() {
-	if err := registry.Queue.Run(registry.QueueMux); err != nil {
+	if err := do.MustInvoke[*asynq.Server](nil).Run(do.MustInvoke[*asynq.ServeMux](nil)); err != nil {
 		registry.Logger.Error().Msgf("Queue service cannot be started: %v", err)
 	}
 }
 
 // StartScheduler 启动调度服务
 func StartScheduler() {
-	if err := registry.Scheduler.Run(); err != nil {
+	if err := do.MustInvoke[*asynq.Scheduler](nil).Run(); err != nil {
 		registry.Logger.Error().Msgf("Scheduler service cannot be started: %v", err)
 	}
 }
@@ -142,7 +152,7 @@ func AddTask(typename string, params any, opts ...asynq.Option) *asynq.TaskInfo 
 	opts = append(opts, asynq.Timeout(1*time.Minute)) // 1分钟超时
 	opts = append(opts, asynq.Retention(2*time.Hour)) // 保留2小时
 
-	info, err := registry.QueueClient.Enqueue(task, opts...)
+	info, err := do.MustInvoke[*asynq.Client](nil).Enqueue(task, opts...)
 	if err != nil {
 		registry.Logger.Error().Msg("Queue add error :" + err.Error())
 	}
@@ -151,7 +161,7 @@ func AddTask(typename string, params any, opts ...asynq.Option) *asynq.TaskInfo 
 
 // DelTask 删除队列任务
 func DelTask(priority Priority, id string) error {
-	err := registry.QueueInspector.DeleteTask(string(priority), id)
+	err := do.MustInvoke[*asynq.Inspector](nil).DeleteTask(string(priority), id)
 	if errors.Is(err, asynq.ErrQueueNotFound) {
 		return nil
 	}
@@ -177,7 +187,7 @@ func RegScheduler(cron string, typename string, params any, priority ...Priority
 		group = priority[0]
 	}
 	opts = append(opts, asynq.Queue(string(group)))
-	_, err := registry.Scheduler.Register(cron, task, opts...)
+	_, err := do.MustInvoke[*asynq.Scheduler](nil).Register(cron, task, opts...)
 	if err != nil {
 		panic("Scheduler add error :" + err.Error())
 	}
