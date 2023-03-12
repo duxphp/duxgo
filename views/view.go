@@ -3,37 +3,27 @@ package views
 import (
 	"embed"
 	"encoding/json"
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/template/html"
 	"github.com/samber/do"
 	"html/template"
-	"io"
+	"net/http"
 )
 
 var TplFs embed.FS
 
-func Tpl() *template.Template {
-	return do.MustInvoke[*template.Template](nil)
+func Tpl() *html.Engine {
+	return do.MustInvoke[*html.Engine](nil)
 }
 
 func Init() {
 	// 注册模板引擎
-	funcMap := template.FuncMap{
-		"unescape": func(s string) template.HTML {
-			return template.HTML(s)
-		},
-		"marshal": func(v interface{}) template.JS {
-			a, _ := json.Marshal(v)
-			return template.JS(a)
-		},
-	}
-	do.ProvideValue[*template.Template](nil, template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(TplFs, "template/*")))
-}
-
-// Template 模板服务
-type Template struct {
-	Templates *template.Template
-}
-
-func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.Templates.ExecuteTemplate(w, name, data)
+	engine := html.NewFileSystem(http.FS(TplFs), ".gohtml")
+	engine.AddFunc("unescape", func(v string) template.HTML {
+		return template.HTML(v)
+	})
+	engine.AddFunc("marshal", func(v string) string {
+		a, _ := json.Marshal(v)
+		return string(a)
+	})
+	do.ProvideValue[*html.Engine](nil, engine)
 }

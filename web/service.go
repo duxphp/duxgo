@@ -6,127 +6,101 @@ import (
 	"errors"
 	"fmt"
 	"github.com/duxphp/duxgo/v2/config"
-	"github.com/duxphp/duxgo/v2/exception"
-	"github.com/duxphp/duxgo/v2/helper"
+	"github.com/duxphp/duxgo/v2/handlers"
 	"github.com/duxphp/duxgo/v2/logger"
 	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/duxphp/duxgo/v2/views"
 	"github.com/duxphp/duxgo/v2/websocket"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
+	"github.com/gofiber/fiber/v2/middleware/timeout"
 	"github.com/gookit/color"
 	"github.com/gookit/event"
 	"github.com/gookit/goutil/fsutil"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 	"github.com/samber/lo"
-	"net"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"time"
 )
 
 func Init() {
 	// 注册 web 服务
-	registry.App = echo.New()
+	engine := views.Tpl()
 
-	// 注册模板引擎
-	render := &views.Template{
-		Templates: views.Tpl(),
-	}
-	registry.App.Renderer = render
-
-	// 注册异常处理
-	registry.App.HTTPErrorHandler = func(err error, c echo.Context) {
-		code := http.StatusInternalServerError
-		var msg any
-		if e, ok := err.(*exception.CoreError); ok {
-			msg = e.Message
-		} else if e, ok := err.(*echo.HTTPError); ok {
-			code = e.Code
-			msg = e.Message
-		} else {
-			msg = err.Error()
-			body := helper.CtxBody(c)
-			logger.Log().Error().Bytes("body", body).Err(err).Msg("error")
-		}
-
-		// AJAX请求
-		if helper.IsJson(c) {
-			err = c.JSON(code, map[string]any{
-				"code":    code,
-				"message": msg,
-			})
-			if err != nil {
-				logger.Log().Error().Err(err).Send()
+	proxyHeader := config.Get("app").GetString("app.proxyHeader")
+	registry.App = fiber.New(fiber.Config{
+		AppName:       "DuxGO",
+		Prefork:       false,
+		CaseSensitive: false,
+		StrictRouting: false,
+		ProxyHeader:   lo.Ternary[string](proxyHeader != "", proxyHeader, "X-Real-IP"),
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			code := fiber.StatusInternalServerError
+			var msg any
+			if e, ok := err.(*handlers.CoreError); ok {
+				// 程序错误
+				msg = e.Message
+			} else if e, ok := err.(*fiber.Error); ok {
+				// http错误
+				code = e.Code
+				msg = e.Message
+			} else {
+				// 其他错误
+				msg = err.Error()
+				logger.Log().Error().Bytes("body", ctx.Body()).Err(err).Msg("error")
 			}
-			return
-		}
-		// WEB请求
-		if code == http.StatusNotFound {
-			err = views.Tpl().ExecuteTemplate(c.Response(), "404.gohtml", nil)
-		} else {
-			err = views.Tpl().ExecuteTemplate(c.Response(), "500.gohtml", map[string]any{
-				"code":    code,
-				"message": msg,
-			})
-		}
+			// 异步请求
+			if ctx.Is("json") || ctx.XHR() {
+				ctx.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSONCharsetUTF8)
+				return ctx.Status(code).JSON(handlers.New(code, err.Error()))
+			}
 
-		if err != nil {
-			logger.Log().Error().Err(err).Send()
-		}
-	}
+			// Web 请求
+			if code == http.StatusNotFound {
+				return ctx.Render("404.gohtml", fiber.Map{})
+			} else {
+				return ctx.Render("500.gohtml", fiber.Map{
+					"code":    code,
+					"message": msg,
+				})
+			}
+		},
+		Views: engine,
+	})
 
 	// 异常恢复处理
-	registry.App.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
-		StackSize:       4 << 10, // 1 KB
-		LogLevel:        log.ERROR,
-		DisableStackAll: true,
-		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
-			logger.Log().Error().Err(err).Bytes("stack", stack).Send()
-			return exception.Internal(err)
+	registry.App.Use(recover.New(recover.Config{
+		EnableStackTrace: true,
+		StackTraceHandler: func(c *fiber.Ctx, e interface{}) {
+			logger.Log().Error().Interface("err", e).Bytes("stack", debug.Stack()).Send()
 		},
 	}))
-
-	// IP 获取规则
-	registry.App.IPExtractor = func(req *http.Request) string {
-		remoteAddr := req.RemoteAddr
-		if ip := req.Header.Get(echo.HeaderXRealIP); ip != "" {
-			remoteAddr = ip
-		} else if ip = req.Header.Get(echo.HeaderXForwardedFor); ip != "" {
-			remoteAddr = ip
-		} else {
-			remoteAddr, _, _ = net.SplitHostPort(remoteAddr)
-		}
-		if remoteAddr == "::1" {
-			remoteAddr = "127.0.0.1"
-		}
-		return remoteAddr
-	}
 
 	// 超时处理
-	timeout := config.Get("app").GetInt("server.timeout")
-	registry.App.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
-		Skipper: func(c echo.Context) bool {
-			if c.IsWebSocket() {
-				return true
-			} else {
-				return false
-			}
-		},
-		Timeout: time.Duration(timeout) * time.Second,
-	}))
+	t := config.Get("app").GetDuration("server.timeout")
+	registry.App.Use(timeout.New(func(c *fiber.Ctx) error {
+		if c.Get("upgrade") == "websocket" {
+			return nil
+		}
+		return fiber.ErrRequestTimeout
+	}, t*time.Second))
 
 	// 注册静态路由
-	registry.App.Static("/uploads", "./uploads")
+	registry.App.Static("/", "./public")
 
 	// 注册虚拟目录
-	//t.App.StaticFS("/", echo.MustSubFS(core.StaticFs, "public"))
+	// registry.App.StaticFS("/", echo.MustSubFS(core.StaticFs, "public"))
 
 	// cors 跨域处理
-	registry.App.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:  []string{"*"},
-		AllowHeaders:  []string{"*"},
-		ExposeHeaders: []string{"*"},
+	registry.App.Use(cors.New(cors.Config{
+		AllowOrigins:  "*",
+		AllowHeaders:  "*",
+		ExposeHeaders: "*",
 	}))
 
 	// 设置日志
@@ -141,66 +115,20 @@ func Init() {
 			true,
 		),
 	).With().Timestamp().Logger()
-
-	registry.App.Logger.SetOutput(echoLog)
-
-	//registry.App.Logger.SetLevel(log.OFF)
+	registry.App.Use(fiberLogger.New(fiberLogger.Config{Output: echoLog}))
 
 	// 设置默认页面
-	registry.App.GET("/", func(c echo.Context) error {
-		err := views.Tpl().ExecuteTemplate(c.Response(), "welcome.gohtml", nil)
-		if err != nil {
-			return err
-		}
-		return nil
+	registry.App.Get("/", func(ctx *fiber.Ctx) error {
+		return ctx.Render("welcome.gohtml", fiber.Map{})
 	})
 
 	// 注册请求ID
-	registry.App.Use(middleware.RequestID())
+	registry.App.Use(requestid.New())
 
 	// 访问日志
 
-	if config.Get("app").GetBool("logger.request.status") {
-		vLog := logger.New(
-			logger.GetWriter(
-				config.Get("app").GetString("logger.request.level"),
-				config.Get("app").GetString("logger.request.path")+"/web.log",
-				config.Get("app").GetInt("logger.request.maxSize"),
-				config.Get("app").GetInt("logger.request.maxBackups"),
-				config.Get("app").GetInt("logger.request.maxAge"),
-				config.Get("app").GetBool("logger.request.compress"),
-				true,
-			),
-		).With().Timestamp().Logger()
-		registry.App.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-			LogURI:       true,
-			LogHost:      true,
-			LogStatus:    true,
-			LogMethod:    true,
-			LogLatency:   true,
-			LogRemoteIP:  true,
-			LogError:     true,
-			LogRequestID: true,
-			LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-				logT := vLog.Info()
-				if v.Latency > 1*time.Second {
-					logT = vLog.Warn()
-				}
-				logT.Str("id", v.RequestID).
-					Int("status", v.Status).
-					Str("method", v.Method).
-					Str("uri", v.URI).
-					Str("ip", v.RemoteIP).
-					Dur("latency", v.Latency).
-					Err(v.Error).
-					Msg("request")
-				return nil
-			},
-		}))
-
-		// 注册websocket
-		websocket.Init()
-	}
+	// 注册websocket
+	websocket.Init()
 }
 
 func Start() {

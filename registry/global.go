@@ -2,13 +2,13 @@ package registry
 
 import (
 	"context"
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
 	"time"
 )
 
 var (
-	// App echo应用
-	App *echo.Echo
+	// App fiber应用
+	App *fiber.App
 	// Version 版本号
 	Version = "v2.0.0"
 	// BootTime 启动时间

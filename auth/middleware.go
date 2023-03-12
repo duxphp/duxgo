@@ -2,7 +2,7 @@ package auth
 
 import (
 	"errors"
-	"github.com/duxphp/duxgo/v2/exception"
+	"github.com/duxphp/duxgo/v2/handlers"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -52,7 +52,7 @@ func Middleware(app string, renewals ...int64) echo.MiddlewareFunc {
 			}
 		},
 		ErrorHandler: func(c echo.Context, err error) error {
-			return exception.New(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized))
+			return handlers.New(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized))
 		},
 	})
 }

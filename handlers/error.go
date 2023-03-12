@@ -1,4 +1,4 @@
-package exception
+package handlers
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ func (e *CoreError) Error() string {
 	return e.Message
 }
 
-// Error 外部错误
+// Error 错误处理
 func Error(err any, params ...any) *CoreError {
 	msg := "unknown error"
 	if e, ok := err.(error); ok {
@@ -30,12 +30,8 @@ func Error(err any, params ...any) *CoreError {
 		Message: msg,
 	}
 	logger.Log().Error().CallerSkipFrame(2).Interface("err", errs).Msg("core")
-	return errs
-}
 
-// Internal 内部错误
-func Internal(err any, params ...any) *CoreError {
-	errs := Error(err, params)
 	errs.Message = lo.Ternary[string](registry.DebugMsg == "", "business is busy, please try again", registry.DebugMsg)
+
 	return errs
 }

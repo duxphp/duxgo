@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/duxphp/duxgo/v2/config"
+	"github.com/gofiber/fiber/v2"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
@@ -264,8 +265,11 @@ func InTimeSpan(start, end, check time.Time, includeStart, includeEnd bool) bool
 }
 
 // CtxBody 提取body
-func CtxBody(ctx echo.Context) []byte {
-	s, err := io.ReadAll(ctx.Request().Body)
+func CtxBody(ctx *fiber.Ctx) []byte {
+
+	body, _ := io.ReadAll(ctx.Body())
+
+	s, err := io.ReadAll(ctx.Body)
 	_ = ctx.Request().Body.Close()
 	ctx.Request().Body = io.NopCloser(bytes.NewReader(s))
 	if err != nil {
