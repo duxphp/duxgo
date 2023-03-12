@@ -3,7 +3,7 @@ package logger
 import (
 	"fmt"
 	"github.com/duxphp/duxgo/v2/config"
-	"github.com/duxphp/duxgo/v2/function"
+	"github.com/duxphp/duxgo/v2/helper"
 	"github.com/rs/zerolog"
 	"github.com/samber/do"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -28,8 +28,8 @@ type loggerConfig struct {
 // Init 初始化日志
 func Init() {
 	path := config.Get("app").GetString("logger.default.path")
-	if !function.IsExist(path) {
-		if !function.CreateDir(path) {
+	if !helper.IsExist(path) {
+		if !helper.CreateDir(path) {
 			panic("failed to create log directory")
 		}
 	}

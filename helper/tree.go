@@ -1,4 +1,4 @@
-package function
+package helper
 
 import (
 	"github.com/spf13/cast"

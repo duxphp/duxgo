@@ -31,8 +31,8 @@ func Init() {
 	}
 
 	// 设置框架配置
-	registry.Debug = registry.Config["app"].GetBool("server.debug")
-	registry.DebugMsg = registry.Config["app"].GetString("server.debugMsg")
+	registry.Debug = Get("app").GetBool("server.debug")
+	registry.DebugMsg = Get("app").GetString("server.debugMsg")
 
 }
 

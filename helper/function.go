@@ -1,4 +1,4 @@
-package function
+package helper
 
 import (
 	"bytes"
@@ -6,9 +6,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/duxphp/duxgo/v2/config"
-	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog"
 	"github.com/samber/do"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
@@ -214,7 +214,7 @@ func IsExist(f string) bool {
 func CreateDir(dirName string) bool {
 	err := os.MkdirAll(dirName, 0777)
 	if err != nil {
-		registry.Logger.Error().Err(err).Msg(dirName)
+		do.MustInvoke[*zerolog.Logger](nil).Error().Err(err).Msg(dirName)
 		return false
 	}
 	return true

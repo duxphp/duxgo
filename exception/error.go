@@ -2,6 +2,7 @@ package exception
 
 import (
 	"fmt"
+	"github.com/duxphp/duxgo/v2/logger"
 	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
@@ -28,7 +29,7 @@ func Error(err any, params ...any) *CoreError {
 	errs := &CoreError{
 		Message: msg,
 	}
-	registry.Logger.Error().CallerSkipFrame(2).Interface("err", errs).Msg("core")
+	logger.Log().Error().CallerSkipFrame(2).Interface("err", errs).Msg("core")
 	return errs
 }
 

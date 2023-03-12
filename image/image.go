@@ -3,7 +3,7 @@ package image
 import (
 	"bytes"
 	"github.com/disintegration/imaging"
-	"github.com/duxphp/duxgo/v2/function"
+	"github.com/duxphp/duxgo/v2/helper"
 	"github.com/h2non/filetype"
 	"github.com/samber/lo"
 	"image"
@@ -76,7 +76,7 @@ func (t *Image) Watermark(file string, pos WaterPos, quality float64, imgMargin 
 	if !t.Status {
 		return nil
 	}
-	if !function.IsExist(file) {
+	if !helper.IsExist(file) {
 		return nil
 	}
 	// 载入水印图片

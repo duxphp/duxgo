@@ -3,7 +3,6 @@ package auth
 import (
 	"errors"
 	"github.com/duxphp/duxgo/v2/exception"
-	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -14,7 +13,7 @@ import (
 
 // Middleware 授权中间件
 func Middleware(app string, renewals ...int64) echo.MiddlewareFunc {
-	key := []byte(registry.Config["app"].GetString("app.safeKey"))
+	key := []byte(config.Get("app").GetString("app.safeKey"))
 	// 续期时间
 	var renewal int64 = 43200
 	if len(renewals) > 0 {

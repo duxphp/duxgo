@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/duxphp/duxgo/v2/config"
 	"github.com/duxphp/duxgo/v2/exception"
-	"github.com/duxphp/duxgo/v2/function"
+	"github.com/duxphp/duxgo/v2/helper"
 	"github.com/duxphp/duxgo/v2/logger"
 	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/duxphp/duxgo/v2/views"
@@ -46,12 +46,12 @@ func Init() {
 			msg = e.Message
 		} else {
 			msg = err.Error()
-			body := function.CtxBody(c)
+			body := helper.CtxBody(c)
 			logger.Log().Error().Bytes("body", body).Err(err).Msg("error")
 		}
 
 		// AJAX请求
-		if function.IsJson(c) {
+		if helper.IsJson(c) {
 			err = c.JSON(code, map[string]any{
 				"code":    code,
 				"message": msg,
@@ -78,8 +78,9 @@ func Init() {
 
 	// 异常恢复处理
 	registry.App.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
-		StackSize: 4 << 10, // 1 KB
-		LogLevel:  log.ERROR,
+		StackSize:       4 << 10, // 1 KB
+		LogLevel:        log.ERROR,
+		DisableStackAll: true,
 		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
 			logger.Log().Error().Err(err).Bytes("stack", stack).Send()
 			return exception.Internal(err)
@@ -128,8 +129,22 @@ func Init() {
 		ExposeHeaders: []string{"*"},
 	}))
 
-	// 关闭自带日志
-	registry.App.Logger.SetLevel(log.OFF)
+	// 设置日志
+	echoLog := logger.New(
+		logger.GetWriter(
+			config.Get("app").GetString("logger.request.level"),
+			config.Get("app").GetString("logger.request.path")+"/web.log",
+			config.Get("app").GetInt("logger.request.maxSize"),
+			config.Get("app").GetInt("logger.request.maxBackups"),
+			config.Get("app").GetInt("logger.request.maxAge"),
+			config.Get("app").GetBool("logger.request.compress"),
+			true,
+		),
+	).With().Timestamp().Logger()
+
+	registry.App.Logger.SetOutput(echoLog)
+
+	//registry.App.Logger.SetLevel(log.OFF)
 
 	// 设置默认页面
 	registry.App.GET("/", func(c echo.Context) error {

@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/duxphp/duxgo/v2/config"
 	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/gookit/event"
 	"github.com/qiniu/qmgo"
@@ -8,7 +9,7 @@ import (
 )
 
 func QmgoInit() {
-	dbConfig := registry.Config["database"].GetStringMapString("mongoDB")
+	dbConfig := config.Get("database").GetStringMapString("mongoDB")
 
 	var auth = ""
 	if dbConfig["username"] != "" && dbConfig["password"] != "" {

@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/duxphp/duxgo/v2/function"
+	"github.com/duxphp/duxgo/v2/helper"
 	"github.com/duxphp/duxgo/v2/registry"
 )
 
@@ -21,8 +21,8 @@ func Init() {
 
 	// 自动创建目录
 	for _, path := range registry.DirList {
-		if !function.IsExist(path) {
-			if !function.CreateDir(path) {
+		if !helper.IsExist(path) {
+			if !helper.CreateDir(path) {
 				panic("failed to create " + path + " directory")
 			}
 		}

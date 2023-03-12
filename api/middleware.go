@@ -4,7 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"github.com/duxphp/duxgo/v2/function"
+	"github.com/duxphp/duxgo/v2/helper"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/cast"
 	"net/url"
@@ -33,8 +33,8 @@ func Middleware(secretCallback func(id string) string) echo.MiddlewareFunc {
 			if secretKey == "" {
 				return echo.ErrUnauthorized
 			}
-			body := function.CtxBody(c)
-			md5 := strings.ToLower(function.Md5(string(body)))
+			body := helper.CtxBody(c)
+			md5 := strings.ToLower(helper.Md5(string(body)))
 			query, _ := url.QueryUnescape(c.Request().URL.RawQuery)
 			signData := []string{
 				c.Request().URL.Path,

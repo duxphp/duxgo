@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/duxphp/duxgo/v2/config"
+	"github.com/duxphp/duxgo/v2/logger"
 	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/gookit/color"
 	"github.com/hibiken/asynq"
@@ -15,7 +17,7 @@ import (
 
 // Init 初始化任务处理
 func Init() {
-	dbConfig := registry.Config["database"].GetStringMapString("redis")
+	dbConfig := config.Get("database").GetStringMapString("redis")
 	res := asynq.RedisClientOpt{
 		Addr: dbConfig["host"] + ":" + dbConfig["port"],
 		// Omit if no password is required
@@ -41,9 +43,9 @@ func Init() {
 				retried, _ := asynq.GetRetryCount(ctx)
 				maxRetry, _ := asynq.GetMaxRetry(ctx)
 				if retried >= maxRetry {
-					registry.Logger.Info().Err(err).Str("type", task.Type()).Bytes("payload", task.Payload()).Msg("task retry")
+					logger.Log().Info().Err(err).Str("type", task.Type()).Bytes("payload", task.Payload()).Msg("task retry")
 				} else {
-					registry.Logger.Info().Err(err).Str("type", task.Type()).Bytes("payload", task.Payload()).Msg("task error")
+					logger.Log().Info().Err(err).Str("type", task.Type()).Bytes("payload", task.Payload()).Msg("task error")
 				}
 			}),
 		},
@@ -51,13 +53,6 @@ func Init() {
 
 	// 混合器
 	mux := asynq.NewServeMux()
-
-	// 中间件
-	//mux.Use(func(next asynq.Handler) asynq.Handler {
-	//	return asynq.HandlerFunc(func(ctx context.Context, t *asynq.Task) error {
-	//		return nil
-	//	})
-	//})
 
 	// 客户端
 	client := asynq.NewClient(res)
@@ -87,7 +82,7 @@ func Init() {
 			if err == nil {
 				return
 			}
-			registry.Logger.Error().Msgf("scheduler: ", err.Error())
+			logger.Log().Error().Msgf("scheduler: ", err.Error())
 		},
 	})
 
@@ -106,14 +101,14 @@ const (
 // StartQueue 启动队列服务
 func StartQueue() {
 	if err := do.MustInvoke[*asynq.Server](nil).Run(do.MustInvoke[*asynq.ServeMux](nil)); err != nil {
-		registry.Logger.Error().Msgf("Queue service cannot be started: %v", err)
+		logger.Log().Error().Msgf("Queue service cannot be started: %v", err)
 	}
 }
 
 // StartScheduler 启动调度服务
 func StartScheduler() {
 	if err := do.MustInvoke[*asynq.Scheduler](nil).Run(); err != nil {
-		registry.Logger.Error().Msgf("Scheduler service cannot be started: %v", err)
+		logger.Log().Error().Msgf("Scheduler service cannot be started: %v", err)
 	}
 }
 
@@ -154,7 +149,7 @@ func AddTask(typename string, params any, opts ...asynq.Option) *asynq.TaskInfo 
 
 	info, err := do.MustInvoke[*asynq.Client](nil).Enqueue(task, opts...)
 	if err != nil {
-		registry.Logger.Error().Msg("Queue add error :" + err.Error())
+		logger.Log().Error().Msg("Queue add error :" + err.Error())
 	}
 	return info
 }
@@ -197,25 +192,25 @@ type TaskLogger struct {
 }
 
 func (t *TaskLogger) Debug(args ...interface{}) {
-	registry.Logger.Debug().Msg(fmt.Sprint(args...))
+	logger.Log().Debug().Msg(fmt.Sprint(args...))
 }
 
 func (t *TaskLogger) Info(args ...interface{}) {
-	registry.Logger.Info().Msg(fmt.Sprint(args...))
+	logger.Log().Info().Msg(fmt.Sprint(args...))
 
 }
 
 func (t *TaskLogger) Warn(args ...interface{}) {
-	registry.Logger.Warn().Msg(fmt.Sprint(args...))
+	logger.Log().Warn().Msg(fmt.Sprint(args...))
 
 }
 
 func (t *TaskLogger) Error(args ...interface{}) {
-	registry.Logger.Error().Interface("args", args).Msg("task")
+	logger.Log().Error().Interface("args", args).Msg("task")
 
 }
 
 func (t *TaskLogger) Fatal(args ...interface{}) {
-	registry.Logger.Fatal().Msg(fmt.Sprint(args...))
+	logger.Log().Fatal().Msg(fmt.Sprint(args...))
 
 }

@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/golang-jwt/jwt/v4"
 	"time"
 )
@@ -10,7 +9,7 @@ import (
 // NewJWT 新建授权结构
 func NewJWT() *JWT {
 	return &JWT{
-		SigningKey: []byte(registry.Config["app"].GetString("app.safeKey")),
+		SigningKey: []byte(config.Get("app").GetString("app.safeKey")),
 	}
 }
 

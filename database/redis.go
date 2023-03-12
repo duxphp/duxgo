@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/duxphp/duxgo/v2/config"
 	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/go-redis/redis/v8"
 	"github.com/samber/do"
@@ -8,7 +9,7 @@ import (
 )
 
 func RedisInit() {
-	dbConfig := registry.Config["database"].GetStringMapString("redis")
+	dbConfig := config.Get("database").GetStringMapString("redis")
 	client := redis.NewClient(&redis.Options{
 		Addr:     dbConfig["host"] + ":" + dbConfig["port"],
 		Password: dbConfig["password"],

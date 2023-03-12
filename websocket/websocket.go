@@ -3,7 +3,7 @@ package websocket
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/duxphp/duxgo/v2/registry"
+	"github.com/duxphp/duxgo/v2/logger"
 	"github.com/gookit/event"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
@@ -149,7 +149,7 @@ func (c *Client) ServiceRead() {
 		if err != nil {
 			// 错误处理
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseAbnormalClosure, websocket.CloseGoingAway) {
-				registry.Logger.Debug().Err(err).Msg("websocket error")
+				logger.Log().Debug().Err(err).Msg("websocket error")
 			}
 			break
 		}
