@@ -1,12 +1,19 @@
 package views
 
 import (
+	"embed"
 	"encoding/json"
-	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/labstack/echo/v4"
+	"github.com/samber/do"
 	"html/template"
 	"io"
 )
+
+var TplFs embed.FS
+
+func Tpl() *template.Template {
+	return do.MustInvoke[*template.Template](nil)
+}
 
 func Init() {
 	// 注册模板引擎
@@ -19,8 +26,7 @@ func Init() {
 			return template.JS(a)
 		},
 	}
-	tpl := template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(registry.TplFs, "template/*"))
-	registry.Tpl = tpl
+	do.ProvideValue[*template.Template](nil, template.Must(template.New("").Delims("${", "}").Funcs(funcMap).ParseFS(TplFs, "template/*")))
 }
 
 // Template 模板服务

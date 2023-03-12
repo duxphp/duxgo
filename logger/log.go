@@ -13,8 +13,8 @@ import (
 )
 
 // Log 日志
-func Log() zerolog.Logger {
-	return do.MustInvoke[zerolog.Logger](nil)
+func Log() *zerolog.Logger {
+	return do.MustInvoke[*zerolog.Logger](nil)
 }
 
 type loggerConfig struct {
@@ -57,8 +57,8 @@ func Init() {
 			false,
 		))
 	}
-
-	do.ProvideValue[zerolog.Logger](nil, New(writerList...).With().Timestamp().Caller().Logger())
+	log := New(writerList...).With().Timestamp().Caller().Logger()
+	do.ProvideValue[*zerolog.Logger](nil, &log)
 
 }
 

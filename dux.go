@@ -7,6 +7,7 @@ import (
 	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/duxphp/duxgo/v2/service"
 	"github.com/duxphp/duxgo/v2/task"
+	"github.com/duxphp/duxgo/v2/views"
 	"github.com/duxphp/duxgo/v2/web"
 	"github.com/panjf2000/ants/v2"
 	"github.com/spf13/cobra"
@@ -49,7 +50,7 @@ func (t *Dux) create() {
 	time.Local = registry.TimeLocation
 
 	// 设置模板
-	registry.TplFs = tplFs
+	views.TplFs = tplFs
 
 	// 注册应用
 	for _, call := range t.registerApp {

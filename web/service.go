@@ -31,7 +31,7 @@ func Init() {
 
 	// 注册模板引擎
 	render := &views.Template{
-		Templates: registry.Tpl,
+		Templates: views.Tpl(),
 	}
 	registry.App.Renderer = render
 
@@ -47,7 +47,7 @@ func Init() {
 		} else {
 			msg = err.Error()
 			body := function.CtxBody(c)
-			registry.Logger.Error().Bytes("body", body).Err(err).Msg("error")
+			logger.Log().Error().Bytes("body", body).Err(err).Msg("error")
 		}
 
 		// AJAX请求
@@ -57,21 +57,22 @@ func Init() {
 				"message": msg,
 			})
 			if err != nil {
-				registry.Logger.Error().Err(err).Send()
+				logger.Log().Error().Err(err).Send()
 			}
 			return
 		}
 		// WEB请求
 		if code == http.StatusNotFound {
-			err = registry.Tpl.ExecuteTemplate(c.Response(), "404.gohtml", nil)
+			err = views.Tpl().ExecuteTemplate(c.Response(), "404.gohtml", nil)
 		} else {
-			err = registry.Tpl.ExecuteTemplate(c.Response(), "500.gohtml", map[string]any{
+			err = views.Tpl().ExecuteTemplate(c.Response(), "500.gohtml", map[string]any{
 				"code":    code,
 				"message": msg,
 			})
 		}
+
 		if err != nil {
-			registry.Logger.Error().Err(err).Send()
+			logger.Log().Error().Err(err).Send()
 		}
 	}
 
@@ -80,7 +81,7 @@ func Init() {
 		StackSize: 4 << 10, // 1 KB
 		LogLevel:  log.ERROR,
 		LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
-			registry.Logger.Error().Err(err).Bytes("stack", stack).Send()
+			logger.Log().Error().Err(err).Bytes("stack", stack).Send()
 			return exception.Internal(err)
 		},
 	}))
@@ -132,7 +133,7 @@ func Init() {
 
 	// 设置默认页面
 	registry.App.GET("/", func(c echo.Context) error {
-		err := registry.Tpl.ExecuteTemplate(c.Response(), "welcome.gohtml", nil)
+		err := views.Tpl().ExecuteTemplate(c.Response(), "welcome.gohtml", nil)
 		if err != nil {
 			return err
 		}
@@ -143,15 +144,16 @@ func Init() {
 	registry.App.Use(middleware.RequestID())
 
 	// 访问日志
-	if registry.Config["app"].GetBool("logger.request.status") {
+
+	if config.Get("app").GetBool("logger.request.status") {
 		vLog := logger.New(
 			logger.GetWriter(
-				registry.Config["app"].GetString("logger.request.level"),
-				registry.Config["app"].GetString("logger.request.path")+"/web.log",
-				registry.Config["app"].GetInt("logger.request.maxSize"),
-				registry.Config["app"].GetInt("logger.request.maxBackups"),
-				registry.Config["app"].GetInt("logger.request.maxAge"),
-				registry.Config["app"].GetBool("logger.request.compress"),
+				config.Get("app").GetString("logger.request.level"),
+				config.Get("app").GetString("logger.request.path")+"/web.log",
+				config.Get("app").GetInt("logger.request.maxSize"),
+				config.Get("app").GetInt("logger.request.maxBackups"),
+				config.Get("app").GetInt("logger.request.maxAge"),
+				config.Get("app").GetBool("logger.request.compress"),
 				true,
 			),
 		).With().Timestamp().Logger()
@@ -207,12 +209,12 @@ func Start() {
 		return
 	}
 	if err != nil {
-		registry.Logger.Error().Err(err).Msg("web")
+		logger.Log().Error().Err(err).Msg("web")
 	}
 	// 退出事件
 	err, _ = event.Fire("app.close", event.M{})
 	if err != nil {
-		registry.Logger.Error().Err(err).Msg("event stop")
+		logger.Log().Error().Err(err).Msg("event stop")
 	}
 
 	// 关闭服务
