@@ -5,7 +5,6 @@ import (
 	"embed"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog"
 	"github.com/samber/do"
 	"html/template"
 	"time"
@@ -38,7 +37,7 @@ var (
 	Tpl       *template.Template
 	ConfigDir = "./config/"
 	// Logger 日志服务
-	Logger zerolog.Logger
+	//Logger zerolog.Logger
 	// Validator 验证器
 	Validator *validator.Validate
 )
