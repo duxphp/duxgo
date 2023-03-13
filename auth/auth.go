@@ -2,20 +2,21 @@ package auth
 
 import (
 	"errors"
+	"github.com/duxphp/duxgo/v2/config"
 	"github.com/golang-jwt/jwt/v4"
 	"time"
 )
+
+// JWT 结构体
+type JWT struct {
+	SigningKey []byte
+}
 
 // NewJWT 新建授权结构
 func NewJWT() *JWT {
 	return &JWT{
 		SigningKey: []byte(config.Get("app").GetString("app.safeKey")),
 	}
-}
-
-// JWT 结构体
-type JWT struct {
-	SigningKey []byte
 }
 
 // MakeToken 生成 token

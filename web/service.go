@@ -1,8 +1,6 @@
 package web
 
 import (
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/duxphp/duxgo/v2/config"
@@ -19,8 +17,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/timeout"
 	"github.com/gookit/color"
 	"github.com/gookit/event"
-	"github.com/gookit/goutil/fsutil"
-	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
 	"net/http"
 	"os"
@@ -34,11 +30,12 @@ func Init() {
 
 	proxyHeader := config.Get("app").GetString("app.proxyHeader")
 	registry.App = fiber.New(fiber.Config{
-		AppName:       "DuxGO",
-		Prefork:       false,
-		CaseSensitive: false,
-		StrictRouting: false,
-		ProxyHeader:   lo.Ternary[string](proxyHeader != "", proxyHeader, "X-Real-IP"),
+		AppName:               "DuxGO",
+		Prefork:               false,
+		CaseSensitive:         false,
+		StrictRouting:         false,
+		DisableStartupMessage: true,
+		ProxyHeader:           lo.Ternary[string](proxyHeader != "", proxyHeader, "X-Real-IP"),
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 			var msg any
@@ -93,9 +90,6 @@ func Init() {
 	// 注册静态路由
 	registry.App.Static("/", "./public")
 
-	// 注册虚拟目录
-	// registry.App.StaticFS("/", echo.MustSubFS(core.StaticFs, "public"))
-
 	// cors 跨域处理
 	registry.App.Use(cors.New(cors.Config{
 		AllowOrigins:  "*",
@@ -104,7 +98,7 @@ func Init() {
 	}))
 
 	// 设置日志
-	echoLog := logger.New(
+	webLog := logger.New(
 		logger.GetWriter(
 			config.Get("app").GetString("logger.request.level"),
 			config.Get("app").GetString("logger.request.path")+"/web.log",
@@ -115,7 +109,7 @@ func Init() {
 			true,
 		),
 	).With().Timestamp().Logger()
-	registry.App.Use(fiberLogger.New(fiberLogger.Config{Output: echoLog}))
+	registry.App.Use(fiberLogger.New(fiberLogger.Config{Output: webLog}))
 
 	// 设置默认页面
 	registry.App.Get("/", func(ctx *fiber.Ctx) error {
@@ -125,26 +119,21 @@ func Init() {
 	// 注册请求ID
 	registry.App.Use(requestid.New())
 
-	// 访问日志
-
 	// 注册websocket
 	websocket.Init()
 }
 
 func Start() {
 	port := config.Get("app").GetString("server.port")
-	data, _ := json.MarshalIndent(registry.App.Routes(), "", "  ")
-	_ = fsutil.WriteFile("./routes.json", data, 0644)
 
-	registry.App.HideBanner = true
+	// 启动信息
 	banner()
 
 	// 记录启动时间
 	registry.BootTime = time.Now()
 
 	// 启动服务
-	serverAddr := ":" + port
-	err := registry.App.Start(serverAddr)
+	err := registry.App.Listen(":" + port)
 
 	// 退出服务
 	if errors.Is(err, http.ErrServerClosed) {
@@ -161,16 +150,14 @@ func Start() {
 	}
 
 	// 关闭服务
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	_ = registry.App.Shutdown(ctx)
+	_ = registry.App.Shutdown()
 
 	// 释放websocket服务
 	websocket.Release()
 }
 
 func banner() {
-	debug := config.Get("app").GetBool("server.debug")
+	debugBool := config.Get("app").GetBool("server.debug")
 
 	var banner string
 	banner += `   _____           ____ ____` + "\n"
@@ -185,12 +172,12 @@ func banner() {
 
 	var sysMaps []item
 	sysMaps = append(sysMaps, item{
-		Name:  "Echo",
-		Value: echo.Version,
+		Name:  "Fiber",
+		Value: fiber.Version,
 	})
 	sysMaps = append(sysMaps, item{
 		Name:  "Debug",
-		Value: lo.Ternary[string](debug, "enabled", "disabled"),
+		Value: lo.Ternary[string](debugBool, "enabled", "disabled"),
 	})
 	sysMaps = append(sysMaps, item{
 		Name:  "PID",
@@ -198,7 +185,7 @@ func banner() {
 	})
 	sysMaps = append(sysMaps, item{
 		Name:  "Routes",
-		Value: len(registry.App.Routes()),
+		Value: len(registry.App.Stack()),
 	})
 
 	banner += "⇨ "

@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/duxphp/duxgo/v2/logger"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/websocket/v2"
 	"github.com/gookit/event"
-	"github.com/gorilla/websocket"
-	"github.com/labstack/echo/v4"
 	"github.com/panjf2000/ants/v2"
-	"net/http"
 	"sync"
 	"time"
 )
@@ -35,7 +34,7 @@ func Release() {
 }
 
 type Service struct {
-	Socket     websocket.Upgrader
+	//Socket     websocket.Upgrader
 	Clients    map[string]Clients
 	Users      map[string]Users
 	Broadcast  chan *Broadcast
@@ -78,14 +77,15 @@ type Broadcast struct {
 }
 
 func New() *Service {
-	socket := websocket.Upgrader{}
-	socket.CheckOrigin = func(r *http.Request) bool {
-		return true
-	}
+
+	//socket := websocket.Upgrader{}
+	//socket.CheckOrigin = func(r *http.Request) bool {
+	//	return true
+	//}
 	pool, _ := ants.NewPool(200000)
 	return &Service{
-		Pool:       pool,
-		Socket:     socket,
+		Pool: pool,
+		//Socket:     socket,
 		Clients:    map[string]Clients{},
 		Users:      map[string]Users{},
 		Broadcast:  make(chan *Broadcast),
@@ -95,9 +95,38 @@ func New() *Service {
 }
 
 // Handler 消息处理
-func (r *Service) Handler(auth string, accountId string) func(c echo.Context) error {
-	return func(c echo.Context) error {
+func (r *Service) Handler(auth string, accountId string) func(c *fiber.Ctx) error {
+
+	return func(c *fiber.Ctx) error {
+		if !websocket.IsWebSocketUpgrade(c) {
+			return fiber.ErrUpgradeRequired
+		}
+
+		return websocket.New(func(c *websocket.Conn) {
+			// 设置客户端信息
+			var client Client
+			client.Socket = c
+			client.Service = r
+			client.Send = make(chan *Message)
+			client.Auth = auth
+			client.accountId = accountId
+
+			// 注册客户端
+			r.Register <- &client
+
+			_ = r.Pool.Submit(func() {
+				client.ServiceRead()
+			})
+			_ = r.Pool.Submit(func() {
+				client.ServiceWrite()
+			})
+
+		})(c)
+	}
+
+	return websocket.New(func(c *websocket.Conn) {
 		var err error
+
 		// 设置客户端信息
 		var client Client
 		client.Socket, err = r.Socket.Upgrade(c.Response(), c.Request(), nil)
@@ -123,7 +152,8 @@ func (r *Service) Handler(auth string, accountId string) func(c echo.Context) er
 			client.ServiceWrite()
 		})
 		return nil
-	}
+	})
+
 }
 
 // ServiceRead 获取客户端消息
@@ -210,7 +240,7 @@ func (c *Client) ServiceWrite() {
 // Start 启动服务
 func (r *Service) Start() {
 
-	r.Pool.Submit(func() {
+	_ = r.Pool.Submit(func() {
 		for {
 			select {
 			case client := <-r.Register:

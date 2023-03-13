@@ -1,7 +1,7 @@
 package route
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
 )
 
 // RouterData 路由结构
@@ -11,7 +11,7 @@ type RouterData struct {
 	permission bool
 	data       []*RouterItem
 	group      []*RouterData
-	router     *echo.Group
+	router     fiber.Router
 }
 
 // RouterItem 路由结构
@@ -23,14 +23,14 @@ type RouterItem struct {
 }
 
 // New 新建资源路由
-func New(router *echo.Group) *RouterData {
+func New(router fiber.Router) *RouterData {
 	return &RouterData{
 		router: router,
 	}
 }
 
 // Group 路由分组
-func (t *RouterData) Group(prefix string, title string, middle ...echo.MiddlewareFunc) *RouterData {
+func (t *RouterData) Group(prefix string, title string, middle ...fiber.Handler) *RouterData {
 	group := &RouterData{
 		title:  title,
 		prefix: prefix,
@@ -47,57 +47,57 @@ func (t *RouterData) Permission() *RouterData {
 }
 
 // Router 返回原始路由
-func (t *RouterData) Router() *echo.Group {
+func (t *RouterData) Router() fiber.Router {
 	return t.router
 }
 
 // Get 路由
-func (t *RouterData) Get(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
-	return t.Add(echo.GET, path, handler, title, name)
+func (t *RouterData) Get(path string, handler fiber.Handler, title string, name string) fiber.Router {
+	return t.Add("GET", path, handler, title, name)
 }
 
 // Head 路由
-func (t *RouterData) Head(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
-	return t.Add(echo.HEAD, path, handler, title, name)
+func (t *RouterData) Head(path string, handler fiber.Handler, title string, name string) fiber.Router {
+	return t.Add("HEAD", path, handler, title, name)
 }
 
 // Post 路由
-func (t *RouterData) Post(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
-	return t.Add(echo.POST, path, handler, title, name)
+func (t *RouterData) Post(path string, handler fiber.Handler, title string, name string) fiber.Router {
+	return t.Add("POST", path, handler, title, name)
 }
 
 // Put 路由
-func (t *RouterData) Put(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
-	return t.Add(echo.PUT, path, handler, title, name)
+func (t *RouterData) Put(path string, handler fiber.Handler, title string, name string) fiber.Router {
+	return t.Add("PUT", path, handler, title, name)
 }
 
 // Delete 路由
-func (t *RouterData) Delete(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
-	return t.Add(echo.DELETE, path, handler, title, name)
+func (t *RouterData) Delete(path string, handler fiber.Handler, title string, name string) fiber.Router {
+	return t.Add("DELETE", path, handler, title, name)
 }
 
 // Connect 路由
-func (t *RouterData) Connect(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
-	return t.Add(echo.CONNECT, path, handler, title, name)
+func (t *RouterData) Connect(path string, handler fiber.Handler, title string, name string) fiber.Router {
+	return t.Add("CONNECT", path, handler, title, name)
 }
 
 // Options 路由
-func (t *RouterData) Options(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
-	return t.Add(echo.OPTIONS, path, handler, title, name)
+func (t *RouterData) Options(path string, handler fiber.Handler, title string, name string) fiber.Router {
+	return t.Add("OPTIONS", path, handler, title, name)
 }
 
 // Trace 路由
-func (t *RouterData) Trace(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
-	return t.Add(echo.TRACE, path, handler, title, name)
+func (t *RouterData) Trace(path string, handler fiber.Handler, title string, name string) fiber.Router {
+	return t.Add("TRACE", path, handler, title, name)
 }
 
 // Patch 路由
-func (t *RouterData) Patch(path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
-	return t.Add(echo.PATCH, path, handler, title, name)
+func (t *RouterData) Patch(path string, handler fiber.Handler, title string, name string) fiber.Router {
+	return t.Add("PATH", path, handler, title, name)
 }
 
 // Add 添加路由资源
-func (t *RouterData) Add(method string, path string, handler echo.HandlerFunc, title string, name string) *echo.Route {
+func (t *RouterData) Add(method string, path string, handler fiber.Handler, title string, name string) fiber.Router {
 	item := RouterItem{
 		title:  title,
 		method: method,
@@ -105,9 +105,7 @@ func (t *RouterData) Add(method string, path string, handler echo.HandlerFunc, t
 		name:   name,
 	}
 	t.data = append(t.data, &item)
-	r := t.router.Add(method, path, handler)
-	r.Name = item.name
-	return r
+	return t.router.Add(method, path, handler).Name(item.name)
 }
 
 // ParseTree 解析路由为树形

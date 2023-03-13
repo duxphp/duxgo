@@ -1,17 +1,16 @@
 package response
 
 import (
-	"github.com/labstack/echo/v4"
-	"net/http"
+	"github.com/gofiber/fiber/v2"
 )
 
 // Result 返回数据
 type Result struct {
-	Ctx echo.Context
+	Ctx *fiber.Ctx
 }
 
 // New 构建消息
-func New(ctx echo.Context) *Result {
+func New(ctx *fiber.Ctx) *Result {
 	return &Result{Ctx: ctx}
 }
 
@@ -24,7 +23,7 @@ type ResultData struct {
 
 // Render 模板渲染
 func (r *Result) Render(name string, bind any) error {
-	return r.Ctx.Render(http.StatusOK, name, bind)
+	return r.Ctx.Render(name, bind)
 }
 
 // Send 发送消息
@@ -39,13 +38,5 @@ func (r *Result) Send(message string, data ...any) error {
 	res.Code = 200
 	res.Message = message
 	res.Data = params
-	return r.Ctx.JSON(http.StatusOK, res)
-}
-
-// Error 错误消息
-func (r *Result) Error(code int, message string) error {
-	return r.Ctx.JSON(code, ResultData{
-		Code:    code,
-		Message: message,
-	})
+	return r.Ctx.Status(fiber.StatusOK).JSON(res)
 }

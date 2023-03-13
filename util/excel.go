@@ -15,7 +15,7 @@ func ExcelImport(url string) ([][]string, error) {
 		return nil, err
 	}
 	if resp.StatusCode() != 200 {
-		return nil, handlers.Internal(resp.String())
+		return nil, handlers.Error(resp.String())
 	}
 	reader := bytes.NewReader(resp.Body())
 	f, err := excelize.OpenReader(reader)

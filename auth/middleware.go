@@ -1,58 +1,46 @@
 package auth
 
 import (
-	"errors"
-	"github.com/duxphp/duxgo/v2/handlers"
+	"github.com/demdxx/gocast/v2"
+	"github.com/duxphp/duxgo/v2/config"
+	"github.com/gofiber/fiber/v2"
+	fiberJwt "github.com/gofiber/jwt/v3"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/labstack/echo-jwt/v4"
-	"github.com/labstack/echo/v4"
-	"github.com/spf13/cast"
-	"net/http"
 	"time"
 )
 
 // Middleware 授权中间件
-func Middleware(app string, renewals ...int64) echo.MiddlewareFunc {
+func Middleware(app string, renewals ...int64) fiber.Handler {
 	key := []byte(config.Get("app").GetString("app.safeKey"))
 	// 续期时间
 	var renewal int64 = 43200
 	if len(renewals) > 0 {
 		renewal = renewals[0]
 	}
-	return echojwt.WithConfig(echojwt.Config{
-		SigningKey: key,
-		ParseTokenFunc: func(c echo.Context, token string) (interface{}, error) {
-			data := jwt.MapClaims{}
-			jwtToken, err := jwt.ParseWithClaims(token, &data, func(token *jwt.Token) (interface{}, error) {
-				return key, nil
-			})
-			if err != nil {
-				return nil, err
-			}
-			if sub, ok := data["sub"].(string); !ok || sub != app {
-				return nil, errors.New("token type error")
-			}
-			return jwtToken.Valid, nil
-		},
-		SuccessHandler: func(c echo.Context) {
-			// 获取token
-			token := c.Get("user").(*jwt.Token)
-			claims := token.Claims.(jwt.MapClaims)
-			c.Set("auth", cast.ToStringMap(claims))
 
-			// 重新续期
+	return fiberJwt.New(fiberJwt.Config{
+		SigningKey: key,
+		SuccessHandler: func(c *fiber.Ctx) error {
+			user := c.Locals("user").(*jwt.Token)
+			claims := user.Claims.(jwt.MapClaims)
+			c.Locals("auth", gocast.Map[string, any](claims))
+			// 判断应用
+			sub, ok := claims["sub"].(string)
+			if !ok || sub != app {
+				return c.Status(fiber.StatusUnauthorized).SendString("token type error jwt")
+			}
+			// 验证刷新
 			iat := claims["iat"].(int64) // 签发时间
 			exp := claims["exp"].(int64) // 过期时间
-			expire := exp - iat
 			unix := time.Now().Unix()
 			if iat+renewal <= unix {
-				var refToken string
-				refToken, _ = NewJWT().MakeToken(app, claims, expire)
-				c.Response().Header().Set(echo.HeaderAuthorization, "Bearer "+refToken)
+				expire := exp - iat
+				claims["exp"] = unix + expire
+				token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+				tokenString, _ := token.SignedString(token)
+				c.Set(fiber.HeaderAuthorization, "Bearer "+tokenString)
 			}
-		},
-		ErrorHandler: func(c echo.Context, err error) error {
-			return handlers.New(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized))
+			return c.Next()
 		},
 	})
 }
