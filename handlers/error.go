@@ -16,7 +16,6 @@ func (e *CoreError) Error() string {
 	return e.Message
 }
 
-// Error 错误处理
 func Error(err any, params ...any) *CoreError {
 	msg := "unknown error"
 	if e, ok := err.(error); ok {

@@ -11,10 +11,10 @@ import (
 	"time"
 )
 
-// 误差秒
+// margin of error in seconds
 const diffTime float64 = 5
 
-// Middleware 接口签名
+// Middleware Signature Verification
 func Middleware(secretCallback func(id string) string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		date := c.GetRespHeader("Content-Date")
@@ -23,7 +23,7 @@ func Middleware(secretCallback func(id string) string) fiber.Handler {
 		if timeNow.Sub(t).Seconds() > diffTime {
 			return fiber.ErrRequestTimeout
 		}
-		// 签名验证
+
 		sign := c.GetRespHeader("Content-MD5")
 		id := c.GetRespHeader("AccessKey")
 

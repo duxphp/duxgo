@@ -18,14 +18,12 @@ import (
 	"time"
 )
 
-// MigrateModel 合并模型
 var MigrateModel = make([]any, 0)
 
 func Gorm() *gorm.DB {
 	return do.MustInvoke[*gorm.DB](nil)
 }
 
-// GormInit 初始化数据库
 func GormInit() {
 
 	// 注册数据库
@@ -58,10 +56,9 @@ func GormInit() {
 		panic("database error: " + err.Error())
 	}
 
-	// 注册db服务
 	do.ProvideValue[*gorm.DB](nil, database)
 
-	// 设置连接池
+	// Set Connection Pool
 	sqlDB, err := do.MustInvoke[*gorm.DB](nil).DB()
 	if err != nil {
 		panic("database error: " + err.Error())
@@ -71,7 +68,7 @@ func GormInit() {
 
 }
 
-// Logger 数据库日志
+// Logger Database Logs
 type Logger struct {
 	SlowThreshold             time.Duration
 	SourceField               string
@@ -147,7 +144,7 @@ func (l *Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, 
 	}
 }
 
-// GormMigrate 迁移模型
+// GormMigrate Register Migrating Models
 func GormMigrate(dst ...any) {
 	MigrateModel = append(MigrateModel, dst...)
 }

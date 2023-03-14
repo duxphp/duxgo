@@ -8,19 +8,17 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/rs/zerolog"
 	"github.com/samber/do"
-	"github.com/samber/lo"
 	"github.com/spf13/cast"
 	"golang.org/x/crypto/bcrypt"
 	"math"
 	"math/rand"
 	"net/url"
 	"os"
-	"strings"
 	"time"
 	"unicode"
 )
 
-// HashEncode 密文加密
+// HashEncode Ciphertext Encryption
 func HashEncode(content []byte) string {
 	hash, err := bcrypt.GenerateFromPassword(content, bcrypt.MinCost)
 	if err != nil {
@@ -29,7 +27,7 @@ func HashEncode(content []byte) string {
 	return string(hash)
 }
 
-// HashVerify 验证密文
+// HashVerify Ciphertext Verification
 func HashVerify(hashedPwd string, password []byte) bool {
 	byteHash := []byte(hashedPwd)
 	err := bcrypt.CompareHashAndPassword(byteHash, password)
@@ -39,7 +37,7 @@ func HashVerify(hashedPwd string, password []byte) bool {
 	return true
 }
 
-// PageLimit 分页计算
+// PageLimit Pagination Calculation
 func PageLimit(page int, total int, limit int) (int, int) {
 	if page <= 0 {
 		page = 1
@@ -55,7 +53,7 @@ func PageLimit(page int, total int, limit int) (int, int) {
 	return offset, totalPage
 }
 
-// UcFirst 首字母转大写
+// UcFirst Uppercase the First Letter
 func UcFirst(str string) string {
 	for i, v := range str {
 		return string(unicode.ToUpper(v)) + str[i+1:]
@@ -63,7 +61,7 @@ func UcFirst(str string) string {
 	return ""
 }
 
-// LcFirst 首字母小写
+// LcFirst Lowercase the First Letter
 func LcFirst(str string) string {
 	for i, v := range str {
 		return string(unicode.ToLower(v)) + str[i+1:]
@@ -71,24 +69,7 @@ func LcFirst(str string) string {
 	return ""
 }
 
-// MapPluck 提取键值
-func MapPluck(data []map[string]any, value string, key ...string) map[any]any {
-	newData := map[any]any{}
-	for index, item := range data {
-		var name any
-		if len(key) > 0 {
-			name = item[key[0]]
-		} else {
-			name = index
-		}
-		newData[name] = item[value]
-
-	}
-	return newData
-
-}
-
-// Url 普通编译Url
+// Url Compile URL
 func Url(urlString string, params map[string]any, absolutes ...bool) string {
 	var uri url.URL
 	q := uri.Query()
@@ -106,59 +87,7 @@ func Url(urlString string, params map[string]any, absolutes ...bool) string {
 	return urlBuild
 }
 
-// BuildUrl 编译Url
-func BuildUrl(urlString string, params map[string]any, absolute bool, expand ...any) string {
-	// 前缀js变量
-	var prefix string
-	if len(expand) > 0 {
-		prefix = cast.ToString(expand[0]) + "."
-	}
-	// 默认字段
-	var fields []string
-	if len(expand) > 1 {
-		fields = cast.ToStringSlice(expand[1])
-	}
-
-	var uri url.URL
-	q := uri.Query()
-
-	paramsFix := map[string]string{}
-	paramsModel := map[string]string{}
-
-	for key, value := range params {
-		val := cast.ToString(value)
-		val = strings.TrimSpace(val)
-		if strings.HasPrefix(val, "{") && strings.HasSuffix(val, "}") {
-			val = strings.Trim(val, "{")
-			val = strings.Trim(val, "}")
-			paramsFix[key] = val
-			q.Add(key, "xx"+key+"xx")
-		} else {
-			_, ok := lo.Find[string](fields, func(i string) bool {
-				return i == value
-			})
-			if ok {
-				paramsModel[key] = val
-				q.Add(key, "xx"+key+"xx")
-			} else {
-				q.Add(key, cast.ToString(val))
-			}
-		}
-	}
-	urlBuild := urlString + "?" + q.Encode()
-	if absolute {
-		urlBuild = do.MustInvoke[config.Config](nil)["app"].GetString("app.baseUrl") + urlBuild
-	}
-	for k, v := range paramsFix {
-		urlBuild = strings.Replace(urlBuild, "xx"+k+"xx", "${ "+v+" || ''}", -1)
-	}
-	for k, v := range paramsModel {
-		urlBuild = strings.Replace(urlBuild, "xx"+k+"xx", "${ "+prefix+v+" || ''}", -1)
-	}
-	return "`" + urlBuild + "`"
-}
-
-// FormatFileSize 格式化文件大小
+// FormatFileSize Format File Size
 func FormatFileSize(fileSize int64) (size string) {
 	if fileSize < 1024 {
 		//return strconv.FormatInt(fileSize, 10) + "B"
@@ -176,7 +105,7 @@ func FormatFileSize(fileSize int64) (size string) {
 	}
 }
 
-// RandString 随机字符
+// RandString Random Characters
 func RandString(len int) string {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	bytes := make([]byte, len)
@@ -187,27 +116,27 @@ func RandString(len int) string {
 	return string(bytes)
 }
 
-// Md5 生成32位MD5
+// Md5 Generate 32-bit MD5
 func Md5(text string) string {
 	ctx := md5.New()
 	ctx.Write([]byte(text))
 	return hex.EncodeToString(ctx.Sum(nil))
 }
 
-// FileMd5 文件MD5
+// FileMd5 File MD5
 func FileMd5(data []byte) string {
 	m := md5.New()
 	m.Write(data)
 	return hex.EncodeToString(m.Sum(nil))
 }
 
-// IsExist 判断目录文件存在
+// IsExist Determine if Directory/File Exists
 func IsExist(f string) bool {
 	_, err := os.Stat(f)
 	return err == nil || os.IsExist(err)
 }
 
-// CreateDir 创建目录
+// CreateDir Create Directory
 func CreateDir(dirName string) bool {
 	err := os.MkdirAll(dirName, 0777)
 	if err != nil {
@@ -217,7 +146,7 @@ func CreateDir(dirName string) bool {
 	return true
 }
 
-// GetUuid 获取uuid
+// GetUuid Get UUID
 func GetUuid() (string, error) {
 	id, err := uuid.NewV4()
 	if err != nil {
@@ -226,7 +155,7 @@ func GetUuid() (string, error) {
 	return id.String(), nil
 }
 
-// Round 四舍五入保留小数
+// Round Keep Decimal Places
 func Round(val float64, precision int) float64 {
 	if precision == 0 {
 		return math.Round(val)
@@ -240,7 +169,7 @@ func Round(val float64, precision int) float64 {
 	return math.Floor(val*p+0.5) / p
 }
 
-// InTimeSpan 范围时间查询
+// InTimeSpan Range Time Query
 func InTimeSpan(start, end, check time.Time, includeStart, includeEnd bool) bool {
 	_start := start
 	_end := end

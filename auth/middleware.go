@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Middleware 授权中间件
+// Middleware Authorization Middleware
 func Middleware(app string, renewals ...int64) fiber.Handler {
 	key := []byte(config.Get("app").GetString("app.safeKey"))
 	// 续期时间
@@ -24,14 +24,14 @@ func Middleware(app string, renewals ...int64) fiber.Handler {
 			user := c.Locals("user").(*jwt.Token)
 			claims := user.Claims.(jwt.MapClaims)
 			c.Locals("auth", gocast.Map[string, any](claims))
-			// 判断应用
+			// Determine the Routing Application
 			sub, ok := claims["sub"].(string)
 			if !ok || sub != app {
 				return c.Status(fiber.StatusUnauthorized).SendString("token type error jwt")
 			}
-			// 验证刷新
-			iat := claims["iat"].(int64) // 签发时间
-			exp := claims["exp"].(int64) // 过期时间
+			// Auto Refresh
+			iat := claims["iat"].(int64)
+			exp := claims["exp"].(int64)
 			unix := time.Now().Unix()
 			if iat+renewal <= unix {
 				expire := exp - iat

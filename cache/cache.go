@@ -8,10 +8,8 @@ import (
 )
 
 func Init() {
-	// 缓存大小，单位 M
+	// Cache Size, Unit: M
 	cacheSize := config.Get("app").GetInt("cache.size") * 1024 * 1024
-	// 注册di服务
 	do.ProvideValue[*freecache.Cache](nil, freecache.NewCache(cacheSize))
 	debug.SetGCPercent(20)
-
 }

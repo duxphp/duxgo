@@ -20,7 +20,7 @@ var DirList = []string{
 
 func Init() {
 
-	// 自动创建目录
+	// Automatically Create Directory
 	for _, path := range global.DirList {
 		if !helper.IsExist(path) {
 			if !helper.CreateDir(path) {
@@ -29,7 +29,7 @@ func Init() {
 		}
 	}
 
-	// 初始化
+	// Initialize the application and register the routing and other initialization processes for the application in this closure.
 	for _, name := range Indexes {
 		appConfig := List[name]
 		if appConfig.Init != nil {
@@ -37,7 +37,7 @@ func Init() {
 		}
 	}
 
-	// 注册
+	// Register the application and register application routes and other data in this closure.
 	for _, name := range Indexes {
 		appConfig := List[name]
 		if appConfig.Register != nil {
@@ -45,7 +45,7 @@ func Init() {
 		}
 	}
 
-	// 启动
+	// Start the application, which includes the startup process after the application is registered, and handle post-calling methods.
 	for _, name := range Indexes {
 		appConfig := List[name]
 		if appConfig.Boot != nil {

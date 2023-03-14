@@ -6,17 +6,14 @@ import (
 	"net/http"
 )
 
-// New Http 异常
 func New(code int, msg ...string) *fiber.Error {
 	return fiber.NewError(code, msg...)
 }
 
-// NotFound 页面不存在
 func NotFound() *fiber.Error {
 	return fiber.NewError(fiber.StatusNotFound)
 }
 
-// BusinessError 业务错误
 func BusinessError(msg ...string) *fiber.Error {
 	return fiber.NewError(
 		http.StatusInternalServerError,
@@ -24,7 +21,6 @@ func BusinessError(msg ...string) *fiber.Error {
 	)
 }
 
-// BusinessErrorf 业务错误
 func BusinessErrorf(msg string, params ...any) *fiber.Error {
 	return fiber.NewError(
 		http.StatusInternalServerError,
@@ -32,7 +28,6 @@ func BusinessErrorf(msg string, params ...any) *fiber.Error {
 	)
 }
 
-// ParameterError 参数错误
 func ParameterError(msg ...string) *fiber.Error {
 	return fiber.NewError(
 		http.StatusBadRequest,
@@ -40,7 +35,6 @@ func ParameterError(msg ...string) *fiber.Error {
 	)
 }
 
-// ParameterErrorf 参数错误
 func ParameterErrorf(msg string, params ...any) *fiber.Error {
 	return fiber.NewError(
 		http.StatusBadRequest,
@@ -48,7 +42,6 @@ func ParameterErrorf(msg string, params ...any) *fiber.Error {
 	)
 }
 
-// UnknownError 未知错误
 func UnknownError(msg ...string) *fiber.Error {
 	return fiber.NewError(
 		http.StatusForbidden,
@@ -56,7 +49,6 @@ func UnknownError(msg ...string) *fiber.Error {
 	)
 }
 
-// UnknownErrorf 未知错误
 func UnknownErrorf(msg string, params ...any) *fiber.Error {
 	return fiber.NewError(
 		http.StatusForbidden,

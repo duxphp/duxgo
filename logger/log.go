@@ -11,14 +11,12 @@ import (
 	"time"
 )
 
-// Log 日志
 func Log() *zerolog.Logger {
 	return do.MustInvoke[*zerolog.Logger](nil)
 }
 
-// Init 初始化日志
 func Init() {
-	// 初始化默认日志，根据日志等级分别输出
+	// Initialize default logs and output them according to log levels.
 	writerList := make([]io.Writer, 0)
 	levels := []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
 	for _, level := range levels {
@@ -34,7 +32,6 @@ func Init() {
 
 }
 
-// New 新建日志
 func New(writers ...io.Writer) zerolog.Logger {
 	console := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
 	writers = append(writers, &console)
@@ -42,15 +39,14 @@ func New(writers ...io.Writer) zerolog.Logger {
 	return zerolog.New(multi)
 }
 
-// GetWriter 获取日志驱动
 func GetWriter(level string, dirName string, name string, recursion bool) *LevelWriter {
 	parseLevel, _ := zerolog.ParseLevel(level)
 	return &LevelWriter{zerolog.MultiLevelWriter(&lumberjack.Logger{
-		Filename:   fmt.Sprintf("./data/%s/%s.log", dirName, name),        // 日志文件路径
-		MaxSize:    config.Get("app").GetInt("logger.default.maxSize"),    // 每个日志文件保存的最大尺寸 单位：M
-		MaxBackups: config.Get("app").GetInt("logger.default.maxBackups"), // 日志文件最多保存多少个备份
-		MaxAge:     config.Get("app").GetInt("logger.default.maxAge"),     // 文件最多保存多少天
-		Compress:   config.Get("app").GetBool("logger.default.compress"),  // 是否压缩
+		Filename:   fmt.Sprintf("./data/%s/%s.log", dirName, name),        // Log file path.
+		MaxSize:    config.Get("app").GetInt("logger.default.maxSize"),    // Maximum size of each log file to be saved, unit: M.
+		MaxBackups: config.Get("app").GetInt("logger.default.maxBackups"), // Number of file backups.
+		MaxAge:     config.Get("app").GetInt("logger.default.maxAge"),     // Maximum number of days to keep the files.
+		Compress:   config.Get("app").GetBool("logger.default.compress"),  // Compression status.
 	}), parseLevel, recursion}
 }
 

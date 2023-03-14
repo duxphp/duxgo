@@ -4,7 +4,7 @@ import (
 	"sort"
 )
 
-// MenuData 菜单应用结构
+// MenuData Menu application structure.
 type MenuData struct {
 	App      string `json:"app"`
 	Name     string `json:"name"`
@@ -17,27 +17,24 @@ type MenuData struct {
 	PushData map[string]*MenuData
 }
 
-// New 新建菜单
+// New Create a new menu.
 func New() *MenuData {
 	return &MenuData{
 		PushData: map[string]*MenuData{},
 	}
 }
 
-// Add 添加菜单
 func (t *MenuData) Add(data *MenuData) *MenuData {
 	t.Data = append(t.Data, data)
 	return data
 }
 
-// Push 追加菜单
 func (t *MenuData) Push(app string) *MenuData {
 	data := &MenuData{App: app}
 	t.PushData[data.App] = data
 	return data
 }
 
-// Group 添加菜单组
 func (t *MenuData) Group(name string) *MenuData {
 	data := &MenuData{
 		Name: name,
@@ -46,7 +43,6 @@ func (t *MenuData) Group(name string) *MenuData {
 	return data
 }
 
-// Item 添加条目
 func (t *MenuData) Item(name string, url string, order int) {
 	data := &MenuData{
 		Name:  name,
@@ -56,22 +52,21 @@ func (t *MenuData) Item(name string, url string, order int) {
 	t.Data = append(t.Data, data)
 }
 
-// Get 获取三级菜单
 func (t *MenuData) Get() map[string]any {
-	// 重置菜单
+	// Reset the menu
 	var menu []map[string]any
 	for _, appData := range t.Data {
-		// 合并追加菜单
+		// Merge and append menus
 		if t.PushData[appData.App] != nil {
 
 			for _, datum := range t.PushData[appData.App].Data {
 				appData.Data = append(appData.Data, datum)
 			}
 		}
-		// 重置分组菜单
+		// Reset group menus
 		var group []map[string]any
 		for _, groupData := range appData.Data {
-			// 重置子菜单
+			// Reset submenu
 			var list []map[string]any
 			for _, items := range groupData.Data {
 				list = append(list, map[string]any{

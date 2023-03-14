@@ -18,22 +18,22 @@ import (
 )
 
 type MonitorInfo struct {
-	OsName      string // 操作系统
-	BootTime    string // 启动时间
-	LogSize     uint64 // 日志大小
-	LogSizeF    string // 日志大小格式化
-	UploadSize  uint64 // 上传大小
-	UploadSizeF string // 上传大小格式化
-	TmpSize     uint64 // 缓存大小
-	TmpSizeF    string // 缓存大小格式化
+	OsName      string // OS
+	BootTime    string // Startup time
+	LogSize     uint64 // The size of the log directory
+	LogSizeF    string
+	UploadSize  uint64 // The size of the upload directory
+	UploadSizeF string
+	TmpSize     uint64 // The size of the cache directory.
+	TmpSizeF    string
 }
 
-// GetMonitorInfo 获取监控信息
+// GetMonitorInfo Retrieve monitoring information
 func GetMonitorInfo() *MonitorInfo {
 	data := MonitorInfo{}
 	data.LogSize = getDirSize("/logs")
 	data.LogSizeF = humanize.Bytes(data.LogSize)
-	data.UploadSize = getDirSize("/uploads")
+	data.UploadSize = getDirSize("/public/uploads")
 	data.UploadSizeF = humanize.Bytes(data.UploadSize)
 	data.TmpSize = getDirSize("/tmp")
 	data.TmpSizeF = humanize.Bytes(data.TmpSize)
@@ -52,7 +52,7 @@ type MonitorData struct {
 	Timestamp      int64
 }
 
-// GetMonitorData 获取监控数据
+// GetMonitorData Retrieve monitoring data
 func GetMonitorData() *MonitorData {
 	// CPU占用率
 	p, _ := process.NewProcess(int32(os.Getpid()))
@@ -73,7 +73,7 @@ func GetMonitorData() *MonitorData {
 	}
 }
 
-// GetMonitorLog 获取监控日志
+// GetMonitorLog Retrieve monitoring logs
 func GetMonitorLog() []map[string]any {
 	path := config.Get("app").GetString("logger.default.path")
 	loadFiles, _ := filepath.Glob(path + "/monitor/*.log")
@@ -96,7 +96,6 @@ func getDirSize(path string) uint64 {
 	return uint64(size)
 }
 
-// 解析文件
 func passingFiles(files []string) []map[string]any {
 	loadData := make([]map[string]any, 0)
 	for _, file := range files {
@@ -109,7 +108,6 @@ func passingFiles(files []string) []map[string]any {
 	return loadData
 }
 
-// 解析单文件
 func parsingFile(file string) ([]map[string]any, error) {
 	fd, err := os.Open(file)
 	if err != nil {

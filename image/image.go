@@ -16,7 +16,7 @@ type Image struct {
 	ImgBuffer image.Image
 }
 
-// New 图片处理
+// New  image processing
 func New(file []byte) (*Image, error) {
 	kind, _ := filetype.Match(file)
 	ext := kind.Extension
@@ -46,7 +46,7 @@ func New(file []byte) (*Image, error) {
 	}, nil
 }
 
-// Resize 图片缩放
+// Resize image resizing
 func (t *Image) Resize(width int, height int) error {
 	if !t.Status {
 		return nil
@@ -56,7 +56,7 @@ func (t *Image) Resize(width int, height int) error {
 	return nil
 }
 
-// WaterPos 水印未知
+// WaterPos Watermark position
 type WaterPos int
 
 const (
@@ -71,7 +71,7 @@ const (
 	PosBottomRight
 )
 
-// Watermark 图片水印
+// Watermark image watermarking
 func (t *Image) Watermark(file string, pos WaterPos, quality float64, imgMargin int) error {
 	if !t.Status {
 		return nil
@@ -79,17 +79,17 @@ func (t *Image) Watermark(file string, pos WaterPos, quality float64, imgMargin 
 	if !helper.IsExist(file) {
 		return nil
 	}
-	// 载入水印图片
+
 	waterBuffer, err := imaging.Open(file)
 	if err != nil {
 		return err
 	}
-	// 获取图片信息
+
 	imgWidth := t.ImgBuffer.Bounds().Dx()
 	imgHeight := t.ImgBuffer.Bounds().Dy()
 	waterWidth := waterBuffer.Bounds().Dx()
 	waterHeight := waterBuffer.Bounds().Dy()
-	// 水印图片大于原始图片不处理水印
+	// If the watermark image is larger than the original image, the watermark will not be removed.
 	margin := imgMargin + 50
 	if imgWidth <= waterWidth+margin || imgHeight <= waterHeight+margin {
 		return nil
@@ -134,7 +134,7 @@ func (t *Image) Watermark(file string, pos WaterPos, quality float64, imgMargin 
 	return nil
 }
 
-// Save 保存图片
+// Save image
 func (t *Image) Save(quality int) ([]byte, error) {
 	if !t.Status {
 		return nil, nil

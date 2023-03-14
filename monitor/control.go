@@ -15,7 +15,6 @@ var (
 )
 
 func Init() {
-	// 初始化服务器日志
 	logger = log.New(os.Stderr, "", 0)
 	logger.SetOutput(getLumberjack("monitor"))
 }
@@ -31,7 +30,7 @@ func getLumberjack(name string) *lumberjack.Logger {
 	}
 }
 
-// Control 服务监控
+// Control monitor task
 func Control(ctx context.Context, t *asynq.Task) error {
 	data := GetMonitorData()
 	dataJson, err := json.Marshal(data)

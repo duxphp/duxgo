@@ -13,7 +13,6 @@ import (
 type Config map[string]*viper.Viper
 
 func Init() {
-	// 注册di服务
 	do.ProvideValue[Config](nil, map[string]*viper.Viper{})
 
 	pwd, _ := os.Getwd()
@@ -22,7 +21,7 @@ func Init() {
 		panic("configuration loading failure")
 	}
 
-	// 循环加载配置文件
+	// Load Configuration Files in Loop
 	for _, file := range configFiles {
 		filename := path.Base(file)
 		suffix := path.Ext(file)
@@ -30,13 +29,13 @@ func Init() {
 		do.MustInvoke[Config](nil)[name] = LoadConfig(name)
 	}
 
-	// 设置框架配置
+	// Set Framework Configuration
 	global.Debug = Get("app").GetBool("server.debug")
 	global.DebugMsg = Get("app").GetString("server.debugMsg")
 
 }
 
-// LoadConfig 加载配置
+// LoadConfig Load Configuration from Specified File
 func LoadConfig(name string) *viper.Viper {
 	config := viper.New()
 	config.SetConfigName(name)
@@ -49,7 +48,7 @@ func LoadConfig(name string) *viper.Viper {
 	return config
 }
 
-// Get 获取配置
+// Get File Configuration
 func Get(name string) *viper.Viper {
 	if t, ok := do.MustInvoke[Config](nil)[name]; ok {
 		return t
