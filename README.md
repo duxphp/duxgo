@@ -10,13 +10,13 @@
 
 # 🎯 Features
 
-📦 High-performance Web framework based on GoFiber Fasthttp.
-📚 Integrated Gorm as the main database driver to provide good database operation support.
-📡 Not overly encapsulated, making it easy for developers to flexibly choose and upgrade with the version.
-🔧 Integrating major popular packages and encapsulating commonly used tool packages such as logs, exceptions, and permissions.
-📡 Adopt an application modular design to improve the maintainability and scalability of the application.
-📡 Uniform registration of application entry points, facilitating the overall architecture and management of the application.
-🏷 Developing command assistants and scaffolding tools, providing basic code generation.
+- 📦 High-performance Web framework based on GoFiber Fasthttp.
+- 📚 Integrated Gorm as the main database driver to provide good database operation support.
+- 📡 Not overly encapsulated, making it easy for developers to flexibly choose and upgrade with the version.
+- 🔧 Integrating major popular packages and encapsulating commonly used tool packages such as logs, exceptions, and permissions.
+- 📡 Adopt an application modular design to improve the maintainability and scalability of the application.
+- 📡 Uniform registration of application entry points, facilitating the overall architecture and management of the application.
+- 🏷 Developing command assistants and scaffolding tools, providing basic code generation.
 
 
 #  ⚡ Quick start
