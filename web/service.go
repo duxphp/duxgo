@@ -4,17 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"github.com/duxphp/duxgo/v2/config"
+	"github.com/duxphp/duxgo/v2/global"
 	"github.com/duxphp/duxgo/v2/handlers"
 	"github.com/duxphp/duxgo/v2/logger"
-	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/duxphp/duxgo/v2/views"
 	"github.com/duxphp/duxgo/v2/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/gofiber/fiber/v2/middleware/requestid"
-	"github.com/gofiber/fiber/v2/middleware/timeout"
 	"github.com/gookit/color"
 	"github.com/gookit/event"
 	"github.com/samber/lo"
@@ -25,15 +23,15 @@ import (
 )
 
 func Init() {
-	// 注册 web 服务
-	engine := views.Tpl()
 
+	// 注册 web 服务
 	proxyHeader := config.Get("app").GetString("app.proxyHeader")
-	registry.App = fiber.New(fiber.Config{
+	global.App = fiber.New(fiber.Config{
 		AppName:               "DuxGO",
 		Prefork:               false,
 		CaseSensitive:         false,
 		StrictRouting:         false,
+		EnablePrintRoutes:     true,
 		DisableStartupMessage: true,
 		ProxyHeader:           lo.Ternary[string](proxyHeader != "", proxyHeader, "X-Real-IP"),
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
@@ -51,6 +49,7 @@ func Init() {
 				msg = err.Error()
 				logger.Log().Error().Bytes("body", ctx.Body()).Err(err).Msg("error")
 			}
+
 			// 异步请求
 			if ctx.Is("json") || ctx.XHR() {
 				ctx.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSONCharsetUTF8)
@@ -59,39 +58,36 @@ func Init() {
 
 			// Web 请求
 			if code == http.StatusNotFound {
-				return ctx.Render("404.gohtml", fiber.Map{})
+				ctx.Set(fiber.HeaderContentType, fiber.MIMETextHTML)
+				return views.FrameTpl.ExecuteTemplate(ctx.Response().BodyWriter(), "404.gohtml", nil)
 			} else {
-				return ctx.Render("500.gohtml", fiber.Map{
+				ctx.Set(fiber.HeaderContentType, fiber.MIMETextHTML)
+				err = views.FrameTpl.ExecuteTemplate(ctx.Response().BodyWriter(), "error.gohtml", fiber.Map{
 					"code":    code,
 					"message": msg,
 				})
+				if err != nil {
+					logger.Log().Error().Err(err).Send()
+				}
+				return nil
 			}
 		},
-		Views: engine,
+		Views: views.Views,
 	})
 
 	// 异常恢复处理
-	registry.App.Use(recover.New(recover.Config{
+	global.App.Use(recover.New(recover.Config{
 		EnableStackTrace: true,
 		StackTraceHandler: func(c *fiber.Ctx, e interface{}) {
 			logger.Log().Error().Interface("err", e).Bytes("stack", debug.Stack()).Send()
 		},
 	}))
 
-	// 超时处理
-	t := config.Get("app").GetDuration("server.timeout")
-	registry.App.Use(timeout.New(func(c *fiber.Ctx) error {
-		if c.Get("upgrade") == "websocket" {
-			return nil
-		}
-		return fiber.ErrRequestTimeout
-	}, t*time.Second))
-
 	// 注册静态路由
-	registry.App.Static("/", "./public")
+	global.App.Static("/", "./public")
 
 	// cors 跨域处理
-	registry.App.Use(cors.New(cors.Config{
+	global.App.Use(cors.New(cors.Config{
 		AllowOrigins:  "*",
 		AllowHeaders:  "*",
 		ExposeHeaders: "*",
@@ -109,15 +105,13 @@ func Init() {
 			true,
 		),
 	).With().Timestamp().Logger()
-	registry.App.Use(fiberLogger.New(fiberLogger.Config{Output: webLog}))
+	global.App.Use(fiberLogger.New(fiberLogger.Config{Output: webLog}))
 
 	// 设置默认页面
-	registry.App.Get("/", func(ctx *fiber.Ctx) error {
-		return ctx.Render("welcome.gohtml", fiber.Map{})
-	})
-
-	// 注册请求ID
-	registry.App.Use(requestid.New())
+	global.App.Get("/", func(ctx *fiber.Ctx) error {
+		ctx.Set(fiber.HeaderContentType, fiber.MIMETextHTML)
+		return views.FrameTpl.ExecuteTemplate(ctx.Response().BodyWriter(), "welcome.gohtml", nil)
+	}).Name("default")
 
 	// 注册websocket
 	websocket.Init()
@@ -130,14 +124,15 @@ func Start() {
 	banner()
 
 	// 记录启动时间
-	registry.BootTime = time.Now()
+	global.BootTime = time.Now()
 
+	color.Println("⇨ <green>Server start http://0.0.0.0:" + port + "</>")
 	// 启动服务
-	err := registry.App.Listen(":" + port)
+	err := global.App.Listen(":" + port)
 
 	// 退出服务
 	if errors.Is(err, http.ErrServerClosed) {
-		color.Print("\n⇨ <red>Server closed</>\n")
+		color.Println("⇨ <red>Server closed</>")
 		return
 	}
 	if err != nil {
@@ -150,7 +145,7 @@ func Start() {
 	}
 
 	// 关闭服务
-	_ = registry.App.Shutdown()
+	_ = global.App.Shutdown()
 
 	// 释放websocket服务
 	websocket.Release()
@@ -163,7 +158,7 @@ func banner() {
 	banner += `   _____           ____ ____` + "\n"
 	banner += `  / __  \__ ______/ ___/ __ \` + "\n"
 	banner += ` / /_/ / /_/ /> </ (_ / /_/ /` + "\n"
-	banner += `/_____/\_,__/_/\_\___/\____/  v` + registry.Version + "\n"
+	banner += `/_____/\_,__/_/\_\___/\____/  v` + global.Version + "\n"
 
 	type item struct {
 		Name  string
@@ -185,13 +180,12 @@ func banner() {
 	})
 	sysMaps = append(sysMaps, item{
 		Name:  "Routes",
-		Value: len(registry.App.Stack()),
+		Value: len(global.App.Stack()),
 	})
 
 	banner += "⇨ "
 	for _, v := range sysMaps {
 		banner += v.Name + " <green>" + fmt.Sprintf("%v", v.Value) + "</>  "
 	}
-	banner += "\n"
-	color.Print(banner)
+	color.Println(banner)
 }

@@ -4,19 +4,23 @@ import (
 	"embed"
 	"encoding/json"
 	"github.com/gofiber/template/html"
-	"github.com/samber/do"
 	"html/template"
 	"net/http"
 )
 
 var TplFs embed.FS
 
-func Tpl() *html.Engine {
-	return do.MustInvoke[*html.Engine](nil)
-}
+var FrameFs embed.FS
+
+var FrameTpl *template.Template
+
+var Views *html.Engine
 
 func Init() {
-	// 注册模板引擎
+	// 注册框架模板
+	FrameTpl = template.Must(template.New("").ParseFS(FrameFs, "template/*"))
+
+	// 注册 Fiber 引擎
 	engine := html.NewFileSystem(http.FS(TplFs), ".gohtml")
 	engine.AddFunc("unescape", func(v string) template.HTML {
 		return template.HTML(v)
@@ -25,5 +29,5 @@ func Init() {
 		a, _ := json.Marshal(v)
 		return string(a)
 	})
-	do.ProvideValue[*html.Engine](nil, engine)
+	Views = engine
 }

@@ -2,7 +2,7 @@ package storage
 
 import (
 	"context"
-	"github.com/duxphp/duxgo/v2/registry"
+	"github.com/duxphp/duxgo/v2/global"
 	"io"
 )
 
@@ -32,11 +32,11 @@ type FileStorage interface {
 func New(types ...string) FileStorage {
 	var Type string
 	if len(types) <= 0 {
-		Type = registry.Config["storage"].GetString("driver.type")
+		Type = global.Config["storage"].GetString("driver.type")
 	} else {
 		Type = types[0]
 	}
-	config := registry.Config["storage"].GetStringMapString("driver." + Type)
+	config := global.Config["storage"].GetStringMapString("driver." + Type)
 
 	var driver FileStorage
 	switch Type {

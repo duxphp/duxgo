@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/duxphp/duxgo/v2/global"
 	"github.com/duxphp/duxgo/v2/logger"
-	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/samber/lo"
 	"github.com/spf13/cast"
 )
@@ -31,7 +31,7 @@ func Error(err any, params ...any) *CoreError {
 	}
 	logger.Log().Error().CallerSkipFrame(2).Interface("err", errs).Msg("core")
 
-	errs.Message = lo.Ternary[string](registry.DebugMsg == "", "business is busy, please try again", registry.DebugMsg)
+	errs.Message = lo.Ternary[string](global.DebugMsg == "", "business is busy, please try again", global.DebugMsg)
 
 	return errs
 }

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/duxphp/duxgo/v2/config"
+	"github.com/duxphp/duxgo/v2/global"
 	coreLogger "github.com/duxphp/duxgo/v2/logger"
-	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/rs/zerolog"
 	"github.com/samber/do"
 	"gorm.io/driver/mysql"
@@ -49,7 +49,7 @@ func GormInit() {
 	}
 	database, err := gorm.Open(connect, &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
-			TablePrefix:   registry.TablePrefix,
+			TablePrefix:   global.TablePrefix,
 			SingularTable: true,
 		},
 		Logger: GormLogger(),

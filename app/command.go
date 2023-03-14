@@ -2,7 +2,7 @@ package app
 
 import (
 	"fmt"
-	"github.com/duxphp/duxgo/v2/registry"
+	"github.com/duxphp/duxgo/v2/global"
 	"github.com/gookit/color"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
@@ -14,7 +14,7 @@ func Command(command *cobra.Command) {
 		Use:   "version",
 		Short: "View the version number",
 		Run: func(cmd *cobra.Command, args []string) {
-			color.Println(fmt.Sprintf("⇨ <red>%s</>", registry.Version))
+			color.Println(fmt.Sprintf("⇨ <red>%s</>", global.Version))
 		},
 	}
 

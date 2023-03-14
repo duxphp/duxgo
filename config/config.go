@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/duxphp/duxgo/v2/registry"
+	"github.com/duxphp/duxgo/v2/global"
 	"github.com/samber/do"
 	"github.com/spf13/viper"
 	"os"
@@ -17,7 +17,7 @@ func Init() {
 	do.ProvideValue[Config](nil, map[string]*viper.Viper{})
 
 	pwd, _ := os.Getwd()
-	configFiles, err := filepath.Glob(filepath.Join(pwd, registry.ConfigDir+"*.yaml"))
+	configFiles, err := filepath.Glob(filepath.Join(pwd, global.ConfigDir+"*.yaml"))
 	if err != nil {
 		panic("configuration loading failure")
 	}
@@ -31,8 +31,8 @@ func Init() {
 	}
 
 	// 设置框架配置
-	registry.Debug = Get("app").GetBool("server.debug")
-	registry.DebugMsg = Get("app").GetString("server.debugMsg")
+	global.Debug = Get("app").GetBool("server.debug")
+	global.DebugMsg = Get("app").GetString("server.debugMsg")
 
 }
 
@@ -41,7 +41,7 @@ func LoadConfig(name string) *viper.Viper {
 	config := viper.New()
 	config.SetConfigName(name)
 	config.SetConfigType("yaml")
-	config.AddConfigPath(registry.ConfigDir)
+	config.AddConfigPath(global.ConfigDir)
 	if err := config.ReadInConfig(); err != nil {
 		fmt.Println("config", name)
 		panic(err)

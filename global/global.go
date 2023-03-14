@@ -1,4 +1,4 @@
-package registry
+package global
 
 import (
 	"context"

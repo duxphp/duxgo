@@ -1,8 +1,8 @@
 package app
 
 import (
+	"github.com/duxphp/duxgo/v2/global"
 	"github.com/duxphp/duxgo/v2/helper"
-	"github.com/duxphp/duxgo/v2/registry"
 )
 
 var DirList = []string{
@@ -20,7 +20,7 @@ var DirList = []string{
 func Init() {
 
 	// 自动创建目录
-	for _, path := range registry.DirList {
+	for _, path := range global.DirList {
 		if !helper.IsExist(path) {
 			if !helper.CreateDir(path) {
 				panic("failed to create " + path + " directory")

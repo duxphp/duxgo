@@ -2,7 +2,7 @@ package database
 
 import (
 	"github.com/duxphp/duxgo/v2/config"
-	"github.com/duxphp/duxgo/v2/registry"
+	"github.com/duxphp/duxgo/v2/global"
 	"github.com/gookit/event"
 	"github.com/qiniu/qmgo"
 	"github.com/samber/do"
@@ -16,7 +16,7 @@ func QmgoInit() {
 		auth = dbConfig["username"] + ":" + dbConfig["password"] + "@"
 	}
 
-	client, err := qmgo.NewClient(registry.Ctx, &qmgo.Config{Uri: "mongodb://" + auth + dbConfig["host"] + ":" + dbConfig["port"]})
+	client, err := qmgo.NewClient(global.Ctx, &qmgo.Config{Uri: "mongodb://" + auth + dbConfig["host"] + ":" + dbConfig["port"]})
 	if err != nil {
 		panic("qmgo error :" + err.Error())
 	}
@@ -24,6 +24,6 @@ func QmgoInit() {
 	do.ProvideValue[*qmgo.Database](nil, client.Database(dbConfig["dbname"]))
 
 	event.On("app.close", event.ListenerFunc(func(e event.Event) error {
-		return client.Close(registry.Ctx)
+		return client.Close(global.Ctx)
 	}))
 }

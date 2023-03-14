@@ -2,7 +2,7 @@ package database
 
 import (
 	"github.com/duxphp/duxgo/v2/config"
-	"github.com/duxphp/duxgo/v2/registry"
+	"github.com/duxphp/duxgo/v2/global"
 	"github.com/go-redis/redis/v8"
 	"github.com/samber/do"
 	"github.com/spf13/cast"
@@ -15,7 +15,7 @@ func RedisInit() {
 		Password: dbConfig["password"],
 		DB:       cast.ToInt(dbConfig["db"]),
 	})
-	_, err := client.Ping(registry.Ctx).Result()
+	_, err := client.Ping(global.Ctx).Result()
 	if err != nil {
 		panic(err.Error())
 	}

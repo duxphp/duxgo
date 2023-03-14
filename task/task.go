@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/duxphp/duxgo/v2/config"
+	"github.com/duxphp/duxgo/v2/global"
 	"github.com/duxphp/duxgo/v2/logger"
-	"github.com/duxphp/duxgo/v2/registry"
 	"github.com/gookit/color"
 	"github.com/hibiken/asynq"
 	"github.com/samber/do"
@@ -77,7 +77,7 @@ func Init() {
 	// 定时调度服务
 	scheduler := asynq.NewScheduler(res, &asynq.SchedulerOpts{
 		LogLevel: asynq.ErrorLevel,
-		Location: registry.TimeLocation,
+		Location: global.TimeLocation,
 		PostEnqueueFunc: func(info *asynq.TaskInfo, err error) {
 			if err == nil {
 				return

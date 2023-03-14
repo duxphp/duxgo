@@ -4,7 +4,7 @@ import (
 	"embed"
 	"github.com/duxphp/duxgo/v2/app"
 	"github.com/duxphp/duxgo/v2/database"
-	"github.com/duxphp/duxgo/v2/registry"
+	"github.com/duxphp/duxgo/v2/global"
 	"github.com/duxphp/duxgo/v2/service"
 	"github.com/duxphp/duxgo/v2/task"
 	"github.com/duxphp/duxgo/v2/views"
@@ -40,17 +40,17 @@ func (t *Dux) RegisterDir(dirs ...string) {
 }
 
 //go:embed template/*
-var tplFs embed.FS
+var FrameFs embed.FS
 
 // 创建通用服务
 func (t *Dux) create() {
 
 	// 设置时区
-	registry.TimeLocation = time.FixedZone("CST", 8*3600)
-	time.Local = registry.TimeLocation
+	global.TimeLocation = time.FixedZone("CST", 8*3600)
+	time.Local = global.TimeLocation
 
-	// 设置模板
-	views.TplFs = tplFs
+	// 设置框架模板
+	views.FrameFs = FrameFs
 
 	// 注册应用
 	for _, call := range t.registerApp {
@@ -78,12 +78,12 @@ func (t *Dux) Run() {
 
 // SetTablePrefix 设置数据表前缀
 func (t *Dux) SetTablePrefix(prefix string) {
-	registry.TablePrefix = prefix
+	global.TablePrefix = prefix
 }
 
 // SetConfigDir 设置配置目录
 func (t *Dux) SetConfigDir(dir string) {
-	registry.ConfigDir = dir
+	global.ConfigDir = dir
 }
 
 // SetDatabaseStatus 设置数据库状态

@@ -1,6 +1,7 @@
 package route
 
 import (
+	"github.com/duxphp/duxgo/v2/global"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -23,9 +24,9 @@ type RouterItem struct {
 }
 
 // New 新建资源路由
-func New(router fiber.Router) *RouterData {
+func New(prefix string, middle ...fiber.Handler) *RouterData {
 	return &RouterData{
-		router: router,
+		router: global.App.Group(prefix, middle...),
 	}
 }
 
