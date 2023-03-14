@@ -5,6 +5,7 @@
 <p align="center"><code>duxgo</code> is a fast development framework based on GoFiber, integrated with mainstream third-party packages, simple, easy to develop, and high-performance integrated framework.</p>
 <p align="center">
 <a href="https://www.duxfast.com">Development documen</a>
+<a href="https://github.com/duxphp/duxgo/blob/master/README_zh-CN.md">中文说明</a>
 </p>
 
 
