@@ -36,7 +36,7 @@ func main() {
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return  c.SendString("Hello, World 👋!")
-	}, "首页", "web.home")
+	}, "index", "web.home")
 	
 	dux.Run()
 }
