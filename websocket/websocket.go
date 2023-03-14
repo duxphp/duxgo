@@ -34,7 +34,6 @@ func Release() {
 }
 
 type Service struct {
-	//Socket     websocket.Upgrader
 	Clients    map[string]Clients
 	Users      map[string]Users
 	Broadcast  chan *Broadcast
@@ -98,9 +97,6 @@ func New() *Service {
 func (r *Service) Handler(auth string, accountId string) func(c *fiber.Ctx) error {
 
 	return func(c *fiber.Ctx) error {
-		if !websocket.IsWebSocketUpgrade(c) {
-			return fiber.ErrUpgradeRequired
-		}
 
 		return websocket.New(func(c *websocket.Conn) {
 			// 设置客户端信息
@@ -123,67 +119,33 @@ func (r *Service) Handler(auth string, accountId string) func(c *fiber.Ctx) erro
 
 		})(c)
 	}
-
-	return websocket.New(func(c *websocket.Conn) {
-		var err error
-
-		// 设置客户端信息
-		var client Client
-		client.Socket, err = r.Socket.Upgrade(c.Response(), c.Request(), nil)
-		if err != nil {
-			return err
-		}
-		//client.ID, _ = function.GetUuid()
-		//if err != nil {
-		//	return err
-		//}
-		client.Service = r
-		client.Send = make(chan *Message)
-		client.Auth = auth
-		client.accountId = accountId
-
-		// 注册客户端
-		r.Register <- &client
-
-		r.Pool.Submit(func() {
-			client.ServiceRead()
-		})
-		r.Pool.Submit(func() {
-			client.ServiceWrite()
-		})
-		return nil
-	})
-
 }
 
 // ServiceRead 获取客户端消息
 func (c *Client) ServiceRead() {
-
 	defer func() {
 		c.Service.Unregister <- c
-		c.Socket.Close()
+		_ = c.Socket.Close()
 	}()
-	// SetReadLimit 设置对大致
+	// SetReadLimit 设置最大值
 	c.Socket.SetReadLimit(maxMsgSize)
 	// SetReadDeadline 设置链接超时
 	_ = c.Socket.SetReadDeadline(time.Now().Add(pongWait))
-
 	c.Socket.SetPongHandler(func(appData string) error {
 		//每次收到pong都把deadline往后推迟60秒
-		c.Socket.SetReadDeadline(time.Now().Add(pongWait))
+		_ = c.Socket.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
-
 	for {
 		_, msg, err := c.Socket.ReadMessage()
 		if err != nil {
-			// 错误处理
+			// 关闭错误处理
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseAbnormalClosure, websocket.CloseGoingAway) {
 				logger.Log().Debug().Err(err).Msg("websocket error")
 			}
 			break
 		}
-
+		// 读取收到消息
 		message := bytes.TrimSpace(bytes.Replace(msg, newLine, space, -1))
 		c.Service.Broadcast <- &Broadcast{
 			Client: c,
@@ -194,10 +156,11 @@ func (c *Client) ServiceRead() {
 
 // ServiceWrite 写入客户端消息
 func (c *Client) ServiceWrite() {
+	// 写入超时
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.Socket.Close()
+		_ = c.Socket.Close()
 	}()
 	for {
 		select {
@@ -206,7 +169,7 @@ func (c *Client) ServiceWrite() {
 			_ = c.Socket.SetWriteDeadline(time.Now().Add(pingPeriod))
 			if !ok {
 				// 关闭通道
-				c.Socket.WriteMessage(websocket.CloseMessage, []byte{})
+				_ = c.Socket.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 			// NextWriter 为要发送的下一条消息返回一个写入器。写入器的Close方法将完整的消息刷新到网络。
@@ -249,7 +212,7 @@ func (r *Service) Start() {
 					r.Clients[client.Auth] = map[*Client]bool{}
 				}
 				r.Clients[client.Auth][client] = true
-				client.SendMsg("coon", "successful connection to socket service")
+				client.SendMsg("connect", "successful connection to socket service")
 
 				// 登录 client
 				if r.Users[client.Auth] == nil {
@@ -265,7 +228,7 @@ func (r *Service) Start() {
 
 				// 通知用户上线
 				r.Pool.Submit(func() {
-					event.Fire("websocket.online", map[string]any{
+					event.Fire("websocket.online", event.M{
 						"client": client,
 					})
 				})
@@ -273,7 +236,7 @@ func (r *Service) Start() {
 			case client := <-r.Unregister:
 				// 通知用户下线
 				r.Pool.Submit(func() {
-					event.Fire("websocket.offline", map[string]any{
+					event.Fire("websocket.offline", event.M{
 						"client": client,
 					})
 				})
@@ -295,13 +258,8 @@ func (r *Service) Start() {
 				case "ping":
 					data.Client.SendMsg("pong", "")
 				default:
-					//if data.Client.User == nil {
-					//	data.Client.SendMsg("error", "未授权登录")
-					//	data.Client.Socket.WriteMessage(websocket.CloseMessage, []byte{})
-					//	continue
-					//}
-					r.Pool.Submit(func() {
-						event.Fire("websocket."+MessageStruct.Type, map[string]any{
+					_ = r.Pool.Submit(func() {
+						event.Fire("websocket."+MessageStruct.Type, event.M{
 							"client":  data.Client,
 							"message": &MessageStruct,
 						})
