@@ -1,44 +1,56 @@
-duxgo
-====================
+<p align="center">
+<a href="https://www.duxravel.com/">
+    <img src="https://github.com/duxphp/duxravel/blob/main/resources/image/watermark.png?raw=true" width="100" height="100">
+</a>
+<p align="center"><code>duxgo</code> is a fast development framework based on GoFiber, integrated with mainstream third-party packages, simple, easy to develop, and high-performance integrated framework.</p>
+<p align="center">
+<a href="https://www.duxfast.com">Development documen</a>
+</p>
 
-# 概述
-duxgo 是一款基于 go-echo 框架整合常用的 ORM、日志、队列、缓存等 web 开发常用功能，提供了一个简单、易用、灵活的框架。
 
-# 安装
+# 🎯 Features
 
-使用 go get 安装，无任何第三方依赖：
+📦 High-performance Web framework based on GoFiber Fasthttp.
+📚 Integrated Gorm as the main database driver to provide good database operation support.
+📡 Not overly encapsulated, making it easy for developers to flexibly choose and upgrade with the version.
+🔧 Integrating major popular packages and encapsulating commonly used tool packages such as logs, exceptions, and permissions.
+📡 Adopt an application modular design to improve the maintainability and scalability of the application.
+📡 Uniform registration of application entry points, facilitating the overall architecture and management of the application.
+🏷 Developing command assistants and scaffolding tools, providing basic code generation.
+
+
+#  ⚡ Quick start
+
+```go
+package main
+
+import (
+	"github.com/duxphp/duxgo/v2/app"
+	"github.com/duxphp/duxgo/v2/route"
+)
+
+func main() {
+	dux := duxgo.New()
+	
+	app := route.Add("web", route.New(""))
+
+	app.Get("/", func(c *fiber.Ctx) error {
+		return  c.SendString("Hello, World 👋!")
+	}, "首页", "web.home")
+	
+	dux.Run()
+}
+
+```
+
+#  ⚙ Installation
+
+Please make sure that the current Golang environment version is higher than `1.18`, create the project directory and initialize it.
 
 ```sh
-go get github.com/duxphp/duxgo
+go get github.com/duxphp/duxgo/v2
 ```
 
-# 使用方法
+# 💡Philosophy
 
-## 1. 创建服务
-
-```go
-import "github.com/duxphp/duxgo"
-server := duxgo.New()
-```
-
-## 2. 设置配置目录
-
-将含有 toml 配置文件的目录添加到配置目录中
-```go
-server.SetConfigDir("./config/")
-```
-
-## 3. 注册应用
-
-将自己开发的 HMVC 结构的应用注册到框架中
-```go
-server.Register(func(app *duxgo.App) {
-    system.App()
-    tools.App()
-})
-```
-
-## 4. 启动服务
-```go
-server.Start()
-```
+This framework follows the architectural design of DuxLite, applying each functional module and highly decoupling through `application entry points` and `event scheduling`, ensuring the minimization of basic framework and system required to avoid cumbersome framework designs.
