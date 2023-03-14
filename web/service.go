@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gookit/color"
 	"github.com/gookit/event"
+	"github.com/panjf2000/ants/v2"
 	"github.com/samber/lo"
 	"net/http"
 	"os"
@@ -31,7 +32,7 @@ func Init() {
 		Prefork:               false,
 		CaseSensitive:         false,
 		StrictRouting:         false,
-		EnablePrintRoutes:     true,
+		EnablePrintRoutes:     false,
 		DisableStartupMessage: true,
 		ProxyHeader:           lo.Ternary[string](proxyHeader != "", proxyHeader, "X-Real-IP"),
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
@@ -83,9 +84,6 @@ func Init() {
 		},
 	}))
 
-	// 注册静态路由
-	global.App.Static("/", "./public")
-
 	// cors 跨域处理
 	global.App.Use(cors.New(cors.Config{
 		AllowOrigins:  "*",
@@ -97,21 +95,15 @@ func Init() {
 	webLog := logger.New(
 		logger.GetWriter(
 			config.Get("app").GetString("logger.request.level"),
-			config.Get("app").GetString("logger.request.path")+"/web.log",
-			config.Get("app").GetInt("logger.request.maxSize"),
-			config.Get("app").GetInt("logger.request.maxBackups"),
-			config.Get("app").GetInt("logger.request.maxAge"),
-			config.Get("app").GetBool("logger.request.compress"),
+			"request",
+			"default",
 			true,
 		),
 	).With().Timestamp().Logger()
-	global.App.Use(fiberLogger.New(fiberLogger.Config{Output: webLog}))
-
-	// 设置默认页面
-	global.App.Get("/", func(ctx *fiber.Ctx) error {
-		ctx.Set(fiber.HeaderContentType, fiber.MIMETextHTML)
-		return views.FrameTpl.ExecuteTemplate(ctx.Response().BodyWriter(), "welcome.gohtml", nil)
-	}).Name("default")
+	global.App.Use(fiberLogger.New(fiberLogger.Config{
+		Format: "[${time}] ${status} - ${latency} ${method} ${path}\n",
+		Output: webLog,
+	}))
 
 	// 注册websocket
 	websocket.Init()
@@ -119,36 +111,38 @@ func Init() {
 
 func Start() {
 	port := config.Get("app").GetString("server.port")
-
 	// 启动信息
 	banner()
-
 	// 记录启动时间
 	global.BootTime = time.Now()
 
 	color.Println("⇨ <green>Server start http://0.0.0.0:" + port + "</>")
 	// 启动服务
-	err := global.App.Listen(":" + port)
+	go func() {
+		err := global.App.Listen(":" + port)
+		// 退出服务
+		if errors.Is(err, http.ErrServerClosed) {
+			color.Println("⇨ <red>Server closed</>")
+			return
+		}
+		if err != nil {
+			logger.Log().Error().Err(err).Msg("web")
+		}
+	}()
+}
 
-	// 退出服务
-	if errors.Is(err, http.ErrServerClosed) {
-		color.Println("⇨ <red>Server closed</>")
-		return
-	}
-	if err != nil {
-		logger.Log().Error().Err(err).Msg("web")
-	}
+func Stop() {
 	// 退出事件
-	err, _ = event.Fire("app.close", event.M{})
+	err, _ := event.Fire("app.close", event.M{})
 	if err != nil {
 		logger.Log().Error().Err(err).Msg("event stop")
 	}
-
 	// 关闭服务
 	_ = global.App.Shutdown()
-
 	// 释放websocket服务
 	websocket.Release()
+	// 释放线程池
+	ants.Release()
 }
 
 func banner() {

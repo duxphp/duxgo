@@ -10,6 +10,7 @@ import (
 	"github.com/duxphp/duxgo/v2/logger"
 	"github.com/gookit/color"
 	"github.com/hibiken/asynq"
+	"github.com/rs/zerolog"
 	"github.com/samber/do"
 	"github.com/spf13/cast"
 	"time"
@@ -31,7 +32,16 @@ func Init() {
 	srv := asynq.NewServer(
 		res,
 		asynq.Config{
-			Logger:      &TaskLogger{},
+			Logger: &TaskLogger{
+				Logger: logger.New(
+					logger.GetWriter(
+						zerolog.LevelDebugValue,
+						"task",
+						"default",
+						true,
+					),
+				).With().Timestamp().Logger(),
+			},
 			LogLevel:    asynq.WarnLevel,
 			Concurrency: 20,
 			Queues: map[string]int{
@@ -39,15 +49,15 @@ func Init() {
 				"default": 7,
 				"low":     3,
 			},
-			ErrorHandler: asynq.ErrorHandlerFunc(func(ctx context.Context, task *asynq.Task, err error) {
-				retried, _ := asynq.GetRetryCount(ctx)
-				maxRetry, _ := asynq.GetMaxRetry(ctx)
-				if retried >= maxRetry {
-					logger.Log().Info().Err(err).Str("type", task.Type()).Bytes("payload", task.Payload()).Msg("task retry")
-				} else {
-					logger.Log().Info().Err(err).Str("type", task.Type()).Bytes("payload", task.Payload()).Msg("task error")
-				}
-			}),
+			//ErrorHandler: asynq.ErrorHandlerFunc(func(ctx context.Context, task *asynq.Task, err error) {
+			//	retried, _ := asynq.GetRetryCount(ctx)
+			//	maxRetry, _ := asynq.GetMaxRetry(ctx)
+			//	if retried >= maxRetry {
+			//		logger.Log().Info().Err(err).Str("type", task.Type()).Bytes("payload", task.Payload()).Msg("task retry")
+			//	} else {
+			//		logger.Log().Info().Err(err).Str("type", task.Type()).Bytes("payload", task.Payload()).Msg("task error")
+			//	}
+			//}),
 		},
 	)
 
@@ -70,7 +80,7 @@ func Init() {
 	do.ProvideValue[*asynq.Inspector](nil, inspector)
 
 	mux.HandleFunc("ping", func(ctx context.Context, t *asynq.Task) error {
-		color.Print("⇨ queue ping status\n")
+		color.Print("⇨ <green>Task server start</>\n")
 		return nil
 	})
 
@@ -103,6 +113,7 @@ func StartQueue() {
 	if err := do.MustInvoke[*asynq.Server](nil).Run(do.MustInvoke[*asynq.ServeMux](nil)); err != nil {
 		logger.Log().Error().Msgf("Queue service cannot be started: %v", err)
 	}
+	do.MustInvoke[*asynq.Server](nil).Shutdown()
 }
 
 // StartScheduler 启动调度服务
@@ -110,7 +121,19 @@ func StartScheduler() {
 	if err := do.MustInvoke[*asynq.Scheduler](nil).Run(); err != nil {
 		logger.Log().Error().Msgf("Scheduler service cannot be started: %v", err)
 	}
+	do.MustInvoke[*asynq.Scheduler](nil).Shutdown()
 }
+
+func StopQueue() {
+	do.MustInvoke[*asynq.Server](nil).Shutdown()
+}
+
+func StopScheduler() {
+	do.MustInvoke[*asynq.Scheduler](nil).Shutdown()
+
+}
+
+//
 
 // Add 添加即时队列
 func Add(typename string, params any, priority ...Priority) *asynq.TaskInfo {
@@ -188,29 +211,34 @@ func RegScheduler(cron string, typename string, params any, priority ...Priority
 	}
 }
 
+// RegTask 注册队列任务
+func RegTask(pattern string, handler func(context.Context, *asynq.Task) error) {
+	do.MustInvoke[*asynq.ServeMux](nil).HandleFunc(pattern, handler)
+}
+
 type TaskLogger struct {
+	Logger zerolog.Logger
 }
 
 func (t *TaskLogger) Debug(args ...interface{}) {
-	logger.Log().Debug().Msg(fmt.Sprint(args...))
+	t.Logger.Debug().Msg(fmt.Sprint(args...))
 }
 
 func (t *TaskLogger) Info(args ...interface{}) {
-	logger.Log().Info().Msg(fmt.Sprint(args...))
+	t.Logger.Info().Msg(fmt.Sprint(args...))
 
 }
 
 func (t *TaskLogger) Warn(args ...interface{}) {
-	logger.Log().Warn().Msg(fmt.Sprint(args...))
+	t.Logger.Warn().Msg(fmt.Sprint(args...))
 
 }
 
 func (t *TaskLogger) Error(args ...interface{}) {
-	logger.Log().Error().Interface("args", args).Msg("task")
+	t.Logger.Error().Msg(fmt.Sprint(args...))
 
 }
 
 func (t *TaskLogger) Fatal(args ...interface{}) {
-	logger.Log().Fatal().Msg(fmt.Sprint(args...))
-
+	t.Logger.Fatal().Msg(fmt.Sprint(args...))
 }

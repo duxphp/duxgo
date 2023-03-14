@@ -6,7 +6,6 @@ import (
 	"github.com/duxphp/duxgo/v2/database"
 	"github.com/duxphp/duxgo/v2/global"
 	"github.com/duxphp/duxgo/v2/service"
-	"github.com/duxphp/duxgo/v2/task"
 	"github.com/duxphp/duxgo/v2/views"
 	"github.com/duxphp/duxgo/v2/web"
 	"github.com/panjf2000/ants/v2"
@@ -58,7 +57,7 @@ func (t *Dux) create() {
 	}
 
 	// 注册命令
-	t.RegisterCmd(app.Command, web.Command, task.Command, database.Command)
+	t.RegisterCmd(app.Command, web.Command, database.Command)
 }
 
 // Run 运行命令

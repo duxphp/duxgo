@@ -3,7 +3,6 @@ package logger
 import (
 	"fmt"
 	"github.com/duxphp/duxgo/v2/config"
-	"github.com/duxphp/duxgo/v2/helper"
 	"github.com/rs/zerolog"
 	"github.com/samber/do"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -17,43 +16,16 @@ func Log() *zerolog.Logger {
 	return do.MustInvoke[*zerolog.Logger](nil)
 }
 
-type loggerConfig struct {
-	Path       string
-	MaxSize    int
-	MaxBackups int
-	MaxAge     int
-	Compress   bool
-}
-
 // Init 初始化日志
 func Init() {
-	path := config.Get("app").GetString("logger.default.path")
-	if !helper.IsExist(path) {
-		if !helper.CreateDir(path) {
-			panic("failed to create log directory")
-		}
-	}
-
-	// 默认日志配置
-	logConfig := loggerConfig{
-		Path:       path,
-		MaxSize:    config.Get("app").GetInt("logger.default.maxSize"),
-		MaxBackups: config.Get("app").GetInt("logger.default.maxBackups"),
-		MaxAge:     config.Get("app").GetInt("logger.default.maxAge"),
-		Compress:   config.Get("app").GetBool("logger.default.compress"),
-	}
-
 	// 初始化默认日志，根据日志等级分别输出
 	writerList := make([]io.Writer, 0)
 	levels := []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
 	for _, level := range levels {
 		writerList = append(writerList, GetWriter(
 			level,
-			fmt.Sprintf("%s/%s.log", logConfig.Path, level),
-			logConfig.MaxSize,
-			logConfig.MaxBackups,
-			logConfig.MaxAge,
-			logConfig.Compress,
+			"default",
+			level,
 			false,
 		))
 	}
@@ -71,14 +43,14 @@ func New(writers ...io.Writer) zerolog.Logger {
 }
 
 // GetWriter 获取日志驱动
-func GetWriter(level string, path string, maxSize int, maxBackups int, maxAge int, compress bool, recursion bool) *LevelWriter {
+func GetWriter(level string, dirName string, name string, recursion bool) *LevelWriter {
 	parseLevel, _ := zerolog.ParseLevel(level)
 	return &LevelWriter{zerolog.MultiLevelWriter(&lumberjack.Logger{
-		Filename:   path,       // 日志文件路径
-		MaxSize:    maxSize,    // 每个日志文件保存的最大尺寸 单位：M
-		MaxBackups: maxBackups, // 日志文件最多保存多少个备份
-		MaxAge:     maxAge,     // 文件最多保存多少天
-		Compress:   compress,   // 是否压缩
+		Filename:   fmt.Sprintf("./data/%s/%s.log", dirName, name),        // 日志文件路径
+		MaxSize:    config.Get("app").GetInt("logger.default.maxSize"),    // 每个日志文件保存的最大尺寸 单位：M
+		MaxBackups: config.Get("app").GetInt("logger.default.maxBackups"), // 日志文件最多保存多少个备份
+		MaxAge:     config.Get("app").GetInt("logger.default.maxAge"),     // 文件最多保存多少天
+		Compress:   config.Get("app").GetBool("logger.default.compress"),  // 是否压缩
 	}), parseLevel, recursion}
 }
 

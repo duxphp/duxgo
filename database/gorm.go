@@ -84,11 +84,8 @@ func GormLogger() *Logger {
 	vLog := coreLogger.New(
 		coreLogger.GetWriter(
 			config.Get("app").GetString("logger.db.level"),
-			config.Get("app").GetString("logger.db.path")+"/gorm.log",
-			config.Get("app").GetInt("logger.db.maxSize"),
-			config.Get("app").GetInt("logger.db.maxBackups"),
-			config.Get("app").GetInt("logger.db.maxAge"),
-			config.Get("app").GetBool("logger.db.compress"),
+			"database",
+			"gorm",
 			true,
 		)).With().Caller().CallerWithSkipFrameCount(5).Timestamp().Logger()
 

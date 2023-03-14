@@ -15,7 +15,8 @@ var DirList = []string{
 	"./data/logs/default",
 	"./data/logs/request",
 	"./data/logs/service",
-	"./data/logs/database"}
+	"./data/logs/database",
+	"./data/logs/task"}
 
 func Init() {
 
