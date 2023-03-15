@@ -22,9 +22,7 @@ var (
 	pingPeriod = 10 * time.Second
 )
 
-// Init 默认初始化
 func Init() {
-	//defer pool.Release()
 	Socket = New()
 	Socket.Start()
 }
@@ -76,11 +74,6 @@ type Broadcast struct {
 }
 
 func New() *Service {
-
-	//socket := websocket.Upgrader{}
-	//socket.CheckOrigin = func(r *http.Request) bool {
-	//	return true
-	//}
 	pool, _ := ants.NewPool(200000)
 	return &Service{
 		Pool: pool,
@@ -93,13 +86,13 @@ func New() *Service {
 	}
 }
 
-// Handler 消息处理
+// Handler message handling
 func (r *Service) Handler(auth string, accountId string) func(c *fiber.Ctx) error {
 
 	return func(c *fiber.Ctx) error {
 
 		return websocket.New(func(c *websocket.Conn) {
-			// 设置客户端信息
+			// Set the client information
 			var client Client
 			client.Socket = c
 			client.Service = r
@@ -107,7 +100,7 @@ func (r *Service) Handler(auth string, accountId string) func(c *fiber.Ctx) erro
 			client.Auth = auth
 			client.accountId = accountId
 
-			// 注册客户端
+			// registration client
 			r.Register <- &client
 
 			_ = r.Pool.Submit(func() {
@@ -121,31 +114,31 @@ func (r *Service) Handler(auth string, accountId string) func(c *fiber.Ctx) erro
 	}
 }
 
-// ServiceRead 获取客户端消息
+// ServiceRead Get the client message
 func (c *Client) ServiceRead() {
 	defer func() {
 		c.Service.Unregister <- c
 		_ = c.Socket.Close()
 	}()
-	// SetReadLimit 设置最大值
+	// Set the maximum value
 	c.Socket.SetReadLimit(maxMsgSize)
-	// SetReadDeadline 设置链接超时
+	// Set link timeout
 	_ = c.Socket.SetReadDeadline(time.Now().Add(pongWait))
 	c.Socket.SetPongHandler(func(appData string) error {
-		//每次收到pong都把deadline往后推迟60秒
+		// Every time pong is received, the deadline is pushed back 60 seconds
 		_ = c.Socket.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
 	for {
 		_, msg, err := c.Socket.ReadMessage()
 		if err != nil {
-			// 关闭错误处理
+			// Turn off error handling
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseAbnormalClosure, websocket.CloseGoingAway) {
 				logger.Log().Debug().Err(err).Msg("websocket error")
 			}
 			break
 		}
-		// 读取收到消息
+		// Read received message
 		message := bytes.TrimSpace(bytes.Replace(msg, newLine, space, -1))
 		c.Service.Broadcast <- &Broadcast{
 			Client: c,
@@ -154,7 +147,7 @@ func (c *Client) ServiceRead() {
 	}
 }
 
-// ServiceWrite 写入客户端消息
+// ServiceWrite Writes the client message
 func (c *Client) ServiceWrite() {
 	// 写入超时
 	ticker := time.NewTicker(pingPeriod)
@@ -164,22 +157,22 @@ func (c *Client) ServiceWrite() {
 	}()
 	for {
 		select {
-		// 写消息到当前的 websocket 连接
+		// Write a message to the current websocket connection
 		case message, ok := <-c.Send:
 			_ = c.Socket.SetWriteDeadline(time.Now().Add(pingPeriod))
 			if !ok {
-				// 关闭通道
+				// Closed channel
 				_ = c.Socket.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-			// NextWriter 为要发送的下一条消息返回一个写入器。写入器的Close方法将完整的消息刷新到网络。
+			// NextWriter Returns a writer for the next message to be sent. The writer's Close method flushes the complete message to the network.
 			w, err := c.Socket.NextWriter(websocket.TextMessage)
 			if err != nil {
 				return
 			}
 			content, _ := json.Marshal(message)
 			w.Write(content)
-			// 将排队聊天消息添加到当前的 websocket 消息中
+			// Adds the queued chat message to the current websocket message
 			n := len(c.Send)
 			for i := 0; i < n; i++ {
 				msg := <-c.Send
@@ -190,7 +183,7 @@ func (c *Client) ServiceWrite() {
 			if err := w.Close(); err != nil {
 				return
 			}
-		//心跳保持
+		//Heartbeat maintenance
 		case <-ticker.C:
 			_ = c.Socket.SetWriteDeadline(time.Now().Add(pingPeriod))
 			if err := c.Socket.WriteMessage(websocket.PingMessage, nil); err != nil {
@@ -207,14 +200,14 @@ func (r *Service) Start() {
 		for {
 			select {
 			case client := <-r.Register:
-				// 注册 channel
+				// register channel
 				if r.Clients[client.Auth] == nil {
 					r.Clients[client.Auth] = map[*Client]bool{}
 				}
 				r.Clients[client.Auth][client] = true
 				client.SendMsg("connect", "successful connection to socket service")
 
-				// 登录 client
+				// login client
 				if r.Users[client.Auth] == nil {
 					r.Users[client.Auth] = map[string]*User{}
 				}
@@ -226,7 +219,7 @@ func (r *Service) Start() {
 				client.User = user
 				client.SendMsg("login", "login successful")
 
-				// 通知用户上线
+				// Notify user to go online
 				r.Pool.Submit(func() {
 					event.Fire("websocket.online", event.M{
 						"client": client,
@@ -234,16 +227,16 @@ func (r *Service) Start() {
 				})
 
 			case client := <-r.Unregister:
-				// 通知用户下线
+				// Notify user offline
 				r.Pool.Submit(func() {
 					event.Fire("websocket.offline", event.M{
 						"client": client,
 					})
 				})
-				// 注销 channel
+				// logout channel
 				client.Close()
 			case data := <-r.Broadcast:
-				// 广播 channel
+				// broadcast channel
 				MessageStruct := Message{}
 				err := json.Unmarshal(data.Msg, &MessageStruct)
 				if err != nil {
@@ -271,7 +264,7 @@ func (r *Service) Start() {
 	})
 }
 
-// Close 关闭通道
+// Close Closed channel
 func (c *Client) Close() {
 	close(c.Send)
 	if _, ok := c.Service.Clients[c.Auth]; !ok {
@@ -290,7 +283,7 @@ func (c *Client) Close() {
 	delete(c.Service.Users[c.Auth], c.User.ID)
 }
 
-// SendMsg 发送消息
+// SendMsg send a message
 func (c *Client) SendMsg(Type string, message string, datas ...any) bool {
 	var data any
 	if len(datas) > 0 {
@@ -320,7 +313,7 @@ func (c *Client) SendUserMsg(accountId string, Type string, message string, data
 	return true
 }
 
-// GetUser 根据id获取用户信息
+// GetUser Get user information based on id
 func (c *Client) GetUser(accountId string) *User {
 	if user, ok := c.Service.Users[c.Auth][accountId]; ok {
 		return user
@@ -328,7 +321,7 @@ func (c *Client) GetUser(accountId string) *User {
 	return nil
 }
 
-// Event 事件对接
+// Event  registered events
 func Event(name string, call func(client *Client, message *Message) error) {
 	event.On("websocket."+name, event.ListenerFunc(func(e event.Event) error {
 		client := e.Get("client").(*Client)

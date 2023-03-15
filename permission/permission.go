@@ -5,7 +5,6 @@ import (
 	"sort"
 )
 
-// PermissionData 权限应用结构
 type PermissionData struct {
 	Name  string `json:"name"`
 	Label string `json:"label"`
@@ -13,12 +12,10 @@ type PermissionData struct {
 	Data  []*PermissionData
 }
 
-// New 新建菜单
 func New() *PermissionData {
 	return &PermissionData{}
 }
 
-// Group 添加权限组
 func (t *PermissionData) Group(name string, label string, order int) *PermissionData {
 	data := &PermissionData{
 		Name:  name,
@@ -29,7 +26,6 @@ func (t *PermissionData) Group(name string, label string, order int) *Permission
 	return data
 }
 
-// Add 添加权限
 func (t *PermissionData) Add(label string, name string) {
 	data := &PermissionData{
 		Name:  name,
@@ -37,8 +33,6 @@ func (t *PermissionData) Add(label string, name string) {
 	}
 	t.Data = append(t.Data, data)
 }
-
-// Get 获取二级权限
 func (t *PermissionData) Get() []map[string]any {
 	data := lo.Map[*PermissionData, map[string]any](t.Data, func(group *PermissionData, index int) map[string]any {
 		list := lo.Map[*PermissionData, map[string]any](group.Data, func(item *PermissionData, index int) map[string]any {
@@ -60,8 +54,7 @@ func (t *PermissionData) Get() []map[string]any {
 	return data
 }
 
-// GetData 获取扁平权限
-func (t *PermissionData) GetData() []string {
+func (t *PermissionData) GetFlat() []string {
 	data := []string{}
 	for _, datum := range t.Data {
 		for _, item := range datum.Data {

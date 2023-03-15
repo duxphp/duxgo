@@ -14,7 +14,6 @@ func Validator() *validator.Validate {
 
 func Init() {
 	server := validator.New()
-	// 注册di服务
 	do.ProvideValue[*validator.Validate](nil, server)
 
 	err := server.RegisterValidation("cnPhone", func(f validator.FieldLevel) bool {
@@ -27,7 +26,6 @@ func Init() {
 	}
 }
 
-// ProcessError 验证错误处理
 func ProcessError(object any, err error) error {
 	if err == nil {
 		return nil

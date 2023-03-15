@@ -24,32 +24,27 @@ func Command(command *cobra.Command) {
 				syscall.SIGQUIT,
 				syscall.SIGTERM)
 
-			// 初始化服务
 			service.Init()
-			// 初始化任务
 			task.Init()
-			// 初始化WEB
 			Init()
-			// 初始化监控
 			monitor.Init()
-			// 初始化应用
 			app.Init()
-			// 注册监控
-			task.RegTask("dux.monitor", monitor.Control)
-			task.RegScheduler("*/1 * * * *", "dux.monitor", map[string]any{}, task.PRIORITY_LOW)
-			// 启动定时服务
+
+			task.ListenerTask("dux.monitor", monitor.Control)
+			task.ListenerScheduler("*/1 * * * *", "dux.monitor", map[string]any{}, task.PRIORITY_LOW)
+			// Start timing service
 			go func() {
 				task.StartScheduler()
 			}()
-			// 启动队列服务
+			// Start queue service
 			go func() {
 				task.Add("ping", &map[string]any{})
 				task.StartQueue()
 			}()
-			// 启动web服务
+			// Starting the web service
 			Start()
 			<-ch
-			// 关闭服务
+			// Shut down service
 			task.StopScheduler()
 			task.StopQueue()
 			Stop()

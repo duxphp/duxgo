@@ -26,7 +26,6 @@ func Gorm() *gorm.DB {
 
 func GormInit() {
 
-	// 注册数据库
 	dbConfig := config.Get("database").GetStringMapString("db")
 
 	var connect gorm.Dialector

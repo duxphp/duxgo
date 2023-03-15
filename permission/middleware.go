@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-// Middleware 权限中间件
+// Middleware permission
 func Middleware(app string, callback func(id int64) []string) fiber.Handler {
 	var doOnce sync.Once
 	var permissions []string

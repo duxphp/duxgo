@@ -54,14 +54,10 @@ type MonitorData struct {
 
 // GetMonitorData Retrieve monitoring data
 func GetMonitorData() *MonitorData {
-	// CPU占用率
 	p, _ := process.NewProcess(int32(os.Getpid()))
 	cpuPercent, _ := p.Percent(time.Second)
-	// 内存占用率
 	memPercent, _ := p.MemoryPercent()
-	// 创建的线程数
 	threadCount := pprof.Lookup("threadcreate").Count()
-	// Goroutine数
 	GoroutineCount := runtime.NumGoroutine()
 
 	return &MonitorData{

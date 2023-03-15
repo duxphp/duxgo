@@ -5,12 +5,10 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/duxphp/duxgo/v2/helper"
 	"github.com/h2non/filetype"
-	"github.com/samber/lo"
 	"image"
 )
 
 type Image struct {
-	Status    bool
 	Ext       string
 	Size      int
 	ImgBuffer image.Image
@@ -20,19 +18,6 @@ type Image struct {
 func New(file []byte) (*Image, error) {
 	kind, _ := filetype.Match(file)
 	ext := kind.Extension
-	// 过滤图片格式
-	status := false
-	imageTypes := []string{"jpg", "jpeg", "png", "gif", "tif", "tiff", "bmp"}
-	_, ok := lo.Find[string](imageTypes, func(i string) bool {
-		return i == ext
-	})
-	if ok {
-		status = true
-	}
-	if !status {
-		return nil, nil
-	}
-	// 初始化对象
 	reader := bytes.NewReader(file)
 	imgBuffer, err := imaging.Decode(reader)
 	if err != nil {
@@ -41,16 +26,12 @@ func New(file []byte) (*Image, error) {
 	return &Image{
 		Ext:       ext,
 		Size:      len(file),
-		Status:    status,
 		ImgBuffer: imgBuffer,
 	}, nil
 }
 
 // Resize image resizing
 func (t *Image) Resize(width int, height int) error {
-	if !t.Status {
-		return nil
-	}
 	t.ImgBuffer = imaging.Resize(t.ImgBuffer, width, 0, imaging.Lanczos)
 	t.ImgBuffer = imaging.Resize(t.ImgBuffer, 0, height, imaging.Lanczos)
 	return nil
@@ -73,9 +54,6 @@ const (
 
 // Watermark image watermarking
 func (t *Image) Watermark(file string, pos WaterPos, quality float64, imgMargin int) error {
-	if !t.Status {
-		return nil
-	}
 	if !helper.IsExist(file) {
 		return nil
 	}
@@ -136,9 +114,6 @@ func (t *Image) Watermark(file string, pos WaterPos, quality float64, imgMargin 
 
 // Save image
 func (t *Image) Save(quality int) ([]byte, error) {
-	if !t.Status {
-		return nil, nil
-	}
 	f, err := imaging.FormatFromFilename("dux." + t.Ext)
 	if err != nil {
 		return nil, err
