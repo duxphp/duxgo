@@ -28,19 +28,51 @@ package main
 
 import (
 	"github.com/duxphp/duxgo/v2/app"
-	"github.com/duxphp/duxgo/v2/route"
+	"project/app/home"
 )
 
 func main() {
 	dux := duxgo.New()
-	
-	app := route.Add("web", route.New(""))
-
-	app.Get("/", func(c *fiber.Ctx) error {
-		return  c.SendString("Hello, World 👋!")
-	}, "首页", "web.home")
-	
+	dux.RegisterApp(home.App)
 	dux.Run()
+}
+
+```
+
+
+```go
+package home
+
+import (
+	"github.com/duxphp/duxgo/v2/app"
+	"github.com/duxphp/duxgo/v2/route"
+	"github.com/gofiber/fiber/v2"
+)
+
+var config = struct {
+}{}
+
+func App() {
+	app.Register(&app.Config{
+		Name:     "home",
+		Title:    "Example",
+		Desc:     "This is an example",
+		Config:   &config,
+		Init:     Init,
+		Register: Register,
+	})
+}
+
+func Init() {
+	route.Add("web", route.New(""))
+}
+
+func Register() {
+	group := route.Get("web")
+	group.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("I'm a GET request!")
+	}, "index", "web.home")
+
 }
 
 ```

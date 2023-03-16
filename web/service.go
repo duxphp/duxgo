@@ -11,11 +11,8 @@ import (
 	"github.com/duxphp/duxgo/v2/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gookit/color"
-	"github.com/gookit/event"
-	"github.com/panjf2000/ants/v2"
 	"github.com/samber/lo"
 	"net/http"
 	"os"
@@ -58,7 +55,7 @@ func Init() {
 
 			// Web request
 			if code == http.StatusNotFound {
-				ctx.Set(fiber.HeaderContentType, fiber.MIMETextHTML)
+				ctx.Status(code).Set(fiber.HeaderContentType, fiber.MIMETextHTML)
 				return views.FrameTpl.ExecuteTemplate(ctx.Response().BodyWriter(), "404.gohtml", nil)
 			} else {
 				ctx.Set(fiber.HeaderContentType, fiber.MIMETextHTML)
@@ -90,19 +87,8 @@ func Init() {
 		ExposeHeaders: "*",
 	}))
 
-	// Setup log
-	webLog := logger.New(
-		logger.GetWriter(
-			config.Get("app").GetString("logger.request.level"),
-			"request",
-			"default",
-			true,
-		),
-	).With().Timestamp().Logger()
-	global.App.Use(fiberLogger.New(fiberLogger.Config{
-		Format: "[${time}] ${status} - ${latency} ${method} ${path}\n",
-		Output: webLog,
-	}))
+	// Request log
+	global.App.Use(fiberLogger())
 
 	// Registering websocket
 	websocket.Init()
@@ -123,16 +109,6 @@ func Start() {
 			logger.Log().Error().Err(err).Msg("web")
 		}
 	}()
-}
-
-func Stop() {
-	err, _ := event.Fire("app.close", event.M{})
-	if err != nil {
-		logger.Log().Error().Err(err).Msg("event stop")
-	}
-	_ = global.App.Shutdown()
-	websocket.Release()
-	ants.Release()
 }
 
 func banner() {
