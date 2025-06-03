@@ -1,10 +1,11 @@
 package permission
 
 import (
+	"sync"
+
 	"github.com/demdxx/gocast/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/samber/lo"
-	"sync"
 )
 
 // Middleware permission

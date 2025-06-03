@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/duxphp/duxgo/v2/config"
 	"github.com/duxphp/duxgo/v2/global"
 	"github.com/duxphp/duxgo/v2/logger"
@@ -13,7 +15,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/samber/do"
 	"github.com/spf13/cast"
-	"time"
 )
 
 func Init() {
@@ -23,6 +24,8 @@ func Init() {
 		Password: dbConfig["password"],
 		DB:       cast.ToInt(dbConfig["db"]),
 	}
+
+	taskConfig := config.Get("task")
 
 	srv := asynq.NewServer(
 		res,
@@ -38,11 +41,11 @@ func Init() {
 				).With().Timestamp().Logger(),
 			},
 			LogLevel:    asynq.WarnLevel,
-			Concurrency: 20,
+			Concurrency: taskConfig.GetInt("concurrency"),
 			Queues: map[string]int{
-				"high":    10,
-				"default": 7,
-				"low":     3,
+				"high":    taskConfig.GetInt("high"),
+				"default": taskConfig.GetInt("default"),
+				"low":     taskConfig.GetInt("low"),
 			},
 		},
 	)
@@ -130,11 +133,17 @@ func AddTime(typename string, params any, t time.Time, priority ...Priority) *as
 }
 
 func AddTask(typename string, params any, opts ...asynq.Option) *asynq.TaskInfo {
+	taskConfig := config.Get("task")
+	timeout := taskConfig.GetDuration("timeout")
+	if timeout == 0 {
+		timeout = 1
+	}
+
 	payload, _ := json.Marshal(params)
 	task := asynq.NewTask(typename, payload)
-	opts = append(opts, asynq.MaxRetry(3))            // Retry count
-	opts = append(opts, asynq.Timeout(1*time.Minute)) // Timeout period
-	opts = append(opts, asynq.Retention(2*time.Hour)) // Retention time
+	opts = append(opts, asynq.MaxRetry(3))                  // Retry count
+	opts = append(opts, asynq.Timeout(timeout*time.Minute)) // Timeout period
+	opts = append(opts, asynq.Retention(2*time.Hour))       // Retention time
 
 	info, err := do.MustInvoke[*asynq.Client](nil).Enqueue(task, opts...)
 	if err != nil {
