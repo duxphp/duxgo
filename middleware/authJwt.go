@@ -2,23 +2,23 @@ package middleware
 
 import (
 	"errors"
+	"net/http"
+	"time"
+
 	"github.com/duxphp/duxgo/core"
 	"github.com/duxphp/duxgo/exception"
 	"github.com/golang-jwt/jwt"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"net/http"
-	"time"
 )
 
 // AuthJwt 授权中间件
 func AuthJwt(auth string) echo.MiddlewareFunc {
 	key := []byte(core.Config["app"].GetString("app.safeKey"))
-	return middleware.JWTWithConfig(middleware.JWTConfig{
+	return echojwt.WithConfig(echojwt.Config{
 		SigningKey:  key,
 		TokenLookup: "header:" + echo.HeaderAuthorization + ",query:auth",
-		Claims:      jwt.MapClaims{},
-		ParseTokenFunc: func(token string, c echo.Context) (interface{}, error) {
+		ParseTokenFunc: func(c echo.Context, token string) (interface{}, error) {
 			data := jwt.MapClaims{}
 			jwtToken, err := jwt.ParseWithClaims(token, data, func(token *jwt.Token) (interface{}, error) {
 				return key, nil
@@ -47,7 +47,7 @@ func AuthJwt(auth string) echo.MiddlewareFunc {
 				}
 			}
 		},
-		ErrorHandler: func(err error) error {
+		ErrorHandler: func(c echo.Context, err error) error {
 			return exception.New(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized))
 		},
 	})
