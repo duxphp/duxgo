@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/duxphp/duxgo/core"
 	"github.com/gookit/color"
 	"github.com/hibiken/asynq"
 	"github.com/spf13/cast"
-	"time"
 )
 
 func Init() {
@@ -23,6 +24,8 @@ func Init() {
 		DB: cast.ToInt(dbConfig["db"]),
 	}
 
+	taskConfig := core.Config["task"]
+
 	// 普通队列服务
 	srv := asynq.NewServer(
 		res,
@@ -31,9 +34,9 @@ func Init() {
 			LogLevel:    asynq.WarnLevel,
 			Concurrency: 20,
 			Queues: map[string]int{
-				"high":    10,
-				"default": 7,
-				"low":     3,
+				"high":    taskConfig.GetInt("high"),
+				"default": taskConfig.GetInt("default"),
+				"low":     taskConfig.GetInt("low"),
 			},
 			ErrorHandler: asynq.ErrorHandlerFunc(func(ctx context.Context, task *asynq.Task, err error) {
 				retried, _ := asynq.GetRetryCount(ctx)
@@ -136,11 +139,18 @@ func AddTime(typename string, params any, t time.Time, priority ...Priority) *as
 
 // AddTask 添加队列任务
 func AddTask(typename string, params any, opts ...asynq.Option) *asynq.TaskInfo {
+
+	taskConfig := core.Config["task"]
+	timeout := taskConfig.GetDuration("timeout")
+	if timeout == 0 {
+		timeout = 1
+	}
+
 	payload, _ := json.Marshal(params)
 	task := asynq.NewTask(typename, payload)
-	opts = append(opts, asynq.MaxRetry(3))            // 重试3次
-	opts = append(opts, asynq.Timeout(1*time.Minute)) // 1分钟超时
-	opts = append(opts, asynq.Retention(2*time.Hour)) // 保留2小时
+	opts = append(opts, asynq.MaxRetry(3))                  // 重试3次
+	opts = append(opts, asynq.Timeout(timeout*time.Minute)) // 1分钟超时
+	opts = append(opts, asynq.Retention(2*time.Hour))       // 保留2小时
 
 	info, err := core.QueueClient.Enqueue(task, opts...)
 	if err != nil {
