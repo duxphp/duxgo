@@ -32,7 +32,7 @@ func Init() {
 		asynq.Config{
 			Logger:      &TaskLogger{},
 			LogLevel:    asynq.WarnLevel,
-			Concurrency: 20,
+			Concurrency: taskConfig.GetInt("concurrency"),
 			Queues: map[string]int{
 				"high":    taskConfig.GetInt("high"),
 				"default": taskConfig.GetInt("default"),
